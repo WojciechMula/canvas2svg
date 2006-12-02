@@ -33,15 +33,6 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 	if items is None:	# default: all items
 		items = canvas.find_withtag('all')
 	
-	def get(name, options, default, state):
-		if state in ['active', 'disabled']:
-			v = options.get(state + name, default.get(state + name, ''))
-			if v:
-				return v
-			else:
-				return options.get(name, default.get(name, ''))
-		else:
-			return options.get(name, default.get(name, ''))
 
 
 	for item in items:
@@ -72,6 +63,16 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 			assert state in ['normal', 'disabled']
 		
 		style = {}
+	
+		def get(name):
+			if state in ['active', 'disabled']:
+				v = options.get(state + name, default.get(state + name, ''))
+				if v:
+					return v
+				else:
+					return options.get(name, default.get(name, ''))
+			else:
+				return options.get(name, default.get(name, ''))
 
 		if type == 'line':
 			# setup geometry
@@ -84,13 +85,13 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 				element = line(coords)
 
 			# setup style
-			style['stroke']            = color(get('fill',  options, default, state))
+			style['stroke']            = color(get('fill'))
 			style['fill']              = 'none'
-			style['stroke-width']      = get('width',      options, default, state)
-			style['stroke-linejoin']   = get('joinstyle',  options, default, state)
-			style['stroke-linecap']    = get('capstyle',   options, default, state)
-			style['stroke-dasharray']  = ','.join(get('dash',  options, default, state))
-			style['stroke-dashoffset'] = get('dashoffset', options, default, state)
+			style['stroke-width']      = get('width')
+			style['stroke-linejoin']   = get('joinstyle')
+			style['stroke-linecap']    = get('capstyle')
+			style['stroke-dasharray']  = ','.join(get('dash'))
+			style['stroke-dashoffset'] = get('dashoffset')
 
 			# setup arrows (if any)
 			arrow = get('arrow', options, default, state)
@@ -116,8 +117,8 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 				element = line(coords)
 
 			# setup style
-			stroke = color(get('outline', options, default, state))
-			fill   = color(get('fill',    options, default, state))
+			stroke = color(get('outline'))
+			fill   = color(get('fill'))
 			if not stroke:
 				if fill:
 					stroke = fill
@@ -129,17 +130,17 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 
 			style['stroke']            = stroke
 			style['fill']              = fill
-			style['stroke-width']      = get('width',      options, default, state)
-			style['stroke-linejoin']   = get('joinstyle',  options, default, state)
-			style['stroke-dasharray']  = ','.join(get('dash',  options, default, state))
-			style['stroke-dashoffset'] = get('dashoffset', options, default, state)
+			style['stroke-width']      = get('width')
+			style['stroke-linejoin']   = get('joinstyle')
+			style['stroke-dasharray']  = ','.join(get('dash'))
+			style['stroke-dashoffset'] = get('dashoffset')
 			
 		elif type == 'oval':
 			element = oval(coords)
 			
 			# setup style
-			stroke = color(get('outline', options, default, state))
-			fill   = color(get('fill',    options, default, state))
+			stroke = color(get('outline'))
+			fill   = color(get('fill'))
 			if not stroke:
 				if fill:
 					stroke = fill
@@ -151,15 +152,15 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 
 			style['stroke']            = stroke
 			style['fill']              = fill
-			style['stroke-width']      = get('width',      options, default, state)
-			style['stroke-dasharray']  = ','.join(get('dash',  options, default, state))
-			style['stroke-dashoffset'] = get('dashoffset', options, default, state)
+			style['stroke-width']      = get('width')
+			style['stroke-dasharray']  = ','.join(get('dash'))
+			style['stroke-dashoffset'] = get('dashoffset')
 
 		elif type == 'rectangle':
 			element    = rectangle(coords)
 
-			stroke = color(get('outline',  options, default, state))
-			fill   = color(get('fill',  options, default, state))
+			stroke = color(get('outline'))
+			fill   = color(get('fill'))
 			if not stroke:
 				if fill:
 					stroke = fill
@@ -171,16 +172,16 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 
 			style['stroke']            = stroke
 			style['fill']              = fill
-			style['stroke-width']      = get('width',      options, default, state)
-			style['stroke-dasharray']  = ','.join(get('dash',  options, default, state))
-			style['stroke-dashoffset'] = get('dashoffset', options, default, state)
+			style['stroke-width']      = get('width')
+			style['stroke-dasharray']  = ','.join(get('dash'))
+			style['stroke-dashoffset'] = get('dashoffset')
 
 		elif type == 'arc':
 			element = arc(coords, options['start'], options['extent'], options['style'])
 
 			# setup style
-			stroke = color(get('outline',  options, default, state))
-			fill   = color(get('fill',  options, default, state))
+			stroke = color(get('outline'))
+			fill   = color(get('fill'))
 			if not stroke:
 				if fill:
 					stroke = fill
@@ -192,9 +193,9 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 
 			style['stroke']            = stroke
 			style['fill']              = fill
-			style['stroke-width']      = get('width',      options, default, state)
-			style['stroke-dasharray']  = ','.join(get('dash',  options, default, state))
-			style['stroke-dashoffset'] = get('dashoffset', options, default, state)
+			style['stroke-width']      = get('width')
+			style['stroke-dasharray']  = ','.join(get('dash'))
+			style['stroke-dashoffset'] = get('dashoffset')
 
 		elif type == 'text':
 			# setup geometry
@@ -212,7 +213,7 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 			opt = font_actual(tk, options['font'])
 
 			# color
-			style['fill'] = color(get('fill', options, default, state))
+			style['fill'] = color(get('fill'))
 
 			# family
 			style['font-family'] = opt['family']
@@ -264,6 +265,19 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 			defs.appendChild(marker)
 		
 	return document
+
+def dash(definition, linewidth):
+	if type(definition) is str:
+		tmp = []
+		for char in definition:
+			if char == "-":
+				tmp.append(4*linewidth)
+				tmp.append(2*linewidth)
+			else: # "."
+				tmp.append(2*linewidth)
+
+	return ",".join(definition)
+
 
 def tag(name):
 	return document.createElement(name)
