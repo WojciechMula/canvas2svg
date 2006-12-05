@@ -20,8 +20,19 @@ svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
 svg.setAttribute('width',  str(1000))
 svg.setAttribute('height', str(1000))
 
-from test import canvas_get_text as get_text
+#from test import canvas_get_text as get_text
 from Tkconstants import *
+
+from Tkinter import TclError
+
+def canvas_get_text(canvas, text_id):
+        tk = canvas.tk
+        try:
+                result = tk.call(canvas._w, 'itemconfigure', text_id, '-text')
+                return tk.splitlist(result)[-1]
+        except TclError:
+                return ''
+get_text = canvas_get_text
 
 def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 	tk = canvas.tk
@@ -38,7 +49,6 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 	for item in items:
 		tmp     = canvas.itemconfigure(item)
 		options = dict((v0, v4) for v0, v1, v2, v3, v4 in tmp.itervalues())
-		default = dict((v0, v3) for v0, v1, v2, v3, v4 in tmp.itervalues())
 
 		# skip hidden items
 		if ignore_hidden and options['state'] == 'hidden':
@@ -54,25 +64,88 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 		coords = canvas.coords(item)
 
 		# get state of item
+		state = options['state']
 		if 'current' in options['tags']:
 			state = 'active'
-		elif options['state'] == '':
+		elif state == '':
 			state = 'normal'
 		else:
 			# left state unchanged
 			assert state in ['normal', 'disabled']
 		
 		style = {}
-	
+
 		def get(name):
 			if state in ['active', 'disabled']:
-				v = options.get(state + name, default.get(state + name, ''))
-				if v:
-					return v
-				else:
-					return options.get(name, default.get(name, ''))
-			else:
-				return options.get(name, default.get(name, ''))
+				try:
+					return options[state+name]
+				except KeyError:
+					pass
+
+			try:
+				return options[name]
+			except KeyError:
+				return ""
+
+		
+		if type == 'line':
+			options['outline'] 			= ''
+			options['activeoutline'] 	= ''
+			options['disabledoutline'] 	= ''
+		elif type == 'arc' and options['style'] == ARC:
+			options['fill'] 			= ''
+			options['activefill'] 		= ''
+			options['disabledfill'] 	= ''
+
+		# setup style
+		if get('outline') != '':
+			style['stroke']		= color(get('outline'))
+		else:
+			style['stroke']		= 'none'
+	
+		fill = options['fill']
+		if state == 'active' and options['activefill'] != '':
+				fill = options['activefill']
+		if state == 'disabled' and options['disabledfill'] != '':
+				fill = options['disabledfill']
+
+		if fill != '':
+			style['fill'] = color(fill)
+		else:
+			style['fill'] = 'none'
+
+		width = float(options['width'])
+		if state == 'active':
+			width = max(float(options['activewidth']), width)
+		elif state == 'disabled':
+			if float(options['disabledwidth']) > 0:
+				width = options['disabledwidth']
+			
+		style['stroke-width']	= width
+
+		if width:
+			dash = options['dash']
+			if state == 'active' and options['activedash'] != '':
+				dash = options['activedash']
+			if state == 'disabled' and options['disableddash'] != '':
+				dash = options['disableddash']
+
+			if dash != '':
+				if type(dash) is str: 
+					linewidth = get('width')
+					tmp = []
+					for char in dash:
+						if char == "-":
+							tmp.append(4*linewidth)
+							tmp.append(2*linewidth)
+						else: # "."
+							tmp.append(2*linewidth)
+							tmp.append(2*linewidth)
+				
+				style['stroke-dasharray'] = ",".join(definition)
+				if get('dashoffset'):
+					style['stroke-dashoffset'] = get('dashoffset')
+
 
 		if type == 'line':
 			# setup geometry
@@ -84,19 +157,22 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = line(coords)
 
-			# setup style
-			style['stroke']            = color(get('fill'))
-			style['fill']              = 'none'
-			style['stroke-width']      = get('width')
-			style['stroke-linejoin']   = get('joinstyle')
-			style['stroke-linecap']    = get('capstyle')
-			style['stroke-dasharray']  = ','.join(get('dash'))
-			style['stroke-dashoffset'] = get('dashoffset')
+			if get('joinstyle'):
+				style['stroke-linejoin'] = get('joinstyle')
+			else:
+				style['stroke-linejoin'] = 'miter'
+			
+			if get('capstyle'):
+				style['stroke-linecap'] = get('capstyle')
+			else:
+				style['stroke-linecap'] = 'butt'
 
+			style['stroke'], style['fill'] = style['fill'], style['stroke']
+		
 			# setup arrows (if any)
-			arrow = get('arrow', options, default, state)
+			arrow = get('arrow')
 			if arrow:
-				shape = get('arrowshape', options, default, state)
+				shape = get('arrowshape')
 
 				if arrow == 'last' or arrow == 'both':
 					id = get_marker(shape, 'last', style['stroke'])
@@ -115,102 +191,34 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = line(coords)
-
-			# setup style
-			stroke = color(get('outline'))
-			fill   = color(get('fill'))
-			if not stroke:
-				if fill:
-					stroke = fill
-				else:
-					stroke = 'black'
-
-			if not fill:
-				fill = 'none'
-
-			style['stroke']            = stroke
-			style['fill']              = fill
-			style['stroke-width']      = get('width')
-			style['stroke-linejoin']   = get('joinstyle')
-			style['stroke-dasharray']  = ','.join(get('dash'))
-			style['stroke-dashoffset'] = get('dashoffset')
 			
-		elif type == 'oval':
-			element = oval(coords)
-			
-			# setup style
-			stroke = color(get('outline'))
-			fill   = color(get('fill'))
-			if not stroke:
-				if fill:
-					stroke = fill
-				else:
-					stroke = 'black'
+			if get('joinstyle'):
+				style['stroke-linejoin'] = get('joinstyle')
+			else:
+				style['stroke-linejoin'] = 'miter'
 
-			if not fill:
-				fill = 'none'
-
-			style['stroke']            = stroke
-			style['fill']              = fill
-			style['stroke-width']      = get('width')
-			style['stroke-dasharray']  = ','.join(get('dash'))
-			style['stroke-dashoffset'] = get('dashoffset')
-
-		elif type == 'rectangle':
-			element    = rectangle(coords)
-
-			stroke = color(get('outline'))
-			fill   = color(get('fill'))
-			if not stroke:
-				if fill:
-					stroke = fill
-				else:
-					stroke = 'black'
-
-			if not fill:
-				fill = 'none'
-
-			style['stroke']            = stroke
-			style['fill']              = fill
-			style['stroke-width']      = get('width')
-			style['stroke-dasharray']  = ','.join(get('dash'))
-			style['stroke-dashoffset'] = get('dashoffset')
-
-		elif type == 'arc':
-			element = arc(coords, options['start'], options['extent'], options['style'])
-
-			# setup style
-			stroke = color(get('outline'))
-			fill   = color(get('fill'))
-			if not stroke:
-				if fill:
-					stroke = fill
-				else:
-					stroke = 'black'
-
-			if not fill or options['style'] == 'arc':
-				fill = 'none'
-
-			style['stroke']            = stroke
-			style['fill']              = fill
-			style['stroke-width']      = get('width')
-			style['stroke-dasharray']  = ','.join(get('dash'))
-			style['stroke-dashoffset'] = get('dashoffset')
-
+		elif type == 'oval':      element = oval(coords)
+		elif type == 'rectangle': element = rectangle(coords)
+		elif type == 'arc':       element = arc(coords, options['start'], options['extent'], options['style'])
 		elif type == 'text':
 			# setup geometry
 			xmin, ymin, xmax, ymax = canvas.bbox(item)
 			text = get_text(canvas, item)
-	
+			
+			x = coords[0]
 			element = setattribs(
 				tag('text'),
-				x = xmin,
+				x = x,
 				y = (ymin + font_metrics(tk, options['font'], 'ascent')) # set y at 'dominant-baseline'
 			)
 			element.appendChild(document.createTextNode(text))
 
 			# 2. Setup style
 			opt = font_actual(tk, options['font'])
+
+			# text-anchor
+			if options['anchor'] == 'center':
+				style['text-anchor'] = 'middle'
 
 			# color
 			style['fill'] = color(get('fill'))
@@ -266,23 +274,9 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 		
 	return document
 
-def dash(definition, linewidth):
-	if type(definition) is str:
-		tmp = []
-		for char in definition:
-			if char == "-":
-				tmp.append(4*linewidth)
-				tmp.append(2*linewidth)
-			else: # "."
-				tmp.append(2*linewidth)
-
-	return ",".join(definition)
-
 
 def tag(name):
 	return document.createElement(name)
-
-
 
 def setattribs(element, **kwargs):
 	for k, v in kwargs.iteritems():
