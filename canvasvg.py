@@ -98,10 +98,15 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 			options['disabledfill'] 	= ''
 
 		# setup style
-		if get('outline') != '':
-			style['stroke']		= color(get('outline'))
+		outline = options['outline']
+		if state == 'active' and options['activeoutline'] != '':
+			outline = options['activeoutline']
+		if state == 'disabled' and options['disabledoutline'] != '':
+			outline = options['disabledoutline']
+		if outline != '':
+			style['stroke'] = color(outline)
 		else:
-			style['stroke']		= 'none'
+			style['stroke'] = 'none'
 	
 		fill = options['fill']
 		if state == 'active' and options['activefill'] != '':
