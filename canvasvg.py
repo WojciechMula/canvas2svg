@@ -3,7 +3,7 @@ import xml.dom as DOM
 from warnings    import warn
 from Tkconstants import *
 
-unsupported = ["bitmap", "image", "window"]
+unsupported = set("bitmap", "image", "window")
 item_types  = ["line", "oval", "polygon", "rectangle", "text", "arc"]
 		
 implementation = DOM.getDOMImplementation()
