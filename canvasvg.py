@@ -1,29 +1,7 @@
-import xml.dom as DOM
-
-from warnings    import warn
-from Tkconstants import *
-
-unsupported = set("bitmap", "image", "window")
-item_types  = ["line", "oval", "polygon", "rectangle", "text", "arc"]
-		
-implementation = DOM.getDOMImplementation()
-
-doctype = implementation.createDocumentType(
-		"svg",
-		"-//W3C//DTD SVG 1.1//EN",
-		"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd")
-
-document= implementation.createDocument(None, "svg", doctype)
-svg	= document.documentElement
-svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-
-svg.setAttribute('width',  str(1000))
-svg.setAttribute('height', str(1000))
-
-#from test import canvas_get_text as get_text
-from Tkconstants import *
-
 from Tkinter import TclError
+
+supported_item_types = \
+	set(["line", "oval", "polygon", "rectangle", "text", "arc"])
 
 def canvas_get_text(canvas, text_id):
         tk = canvas.tk
@@ -32,61 +10,71 @@ def canvas_get_text(canvas, text_id):
                 return tk.splitlist(result)[-1]
         except TclError:
                 return ''
-get_text = canvas_get_text
 
-def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
-	tk = canvas.tk
+def SVGdocument():
+	"""
+	Create default SVG document
+	"""
+	import xml.dom.minidom
+	implementation = xml.dom.minidom.getDOMImplementation()
+	doctype = implementation.createDocumentType(
+		"svg", "-//W3C//DTD SVG 1.1//EN",
+		"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"
+	)
+	document= implementation.createDocument(None, "svg", doctype)
+	document.documentElement.setAttribute(
+		'xmlns', 'http://www.w3.org/2000/svg'
+	)
+	return document
 
-	def color(col):
-		r, g, b = canvas.winfo_rgb(col)
-		return "#%02x%02x%02x" % (r/256, g/256, b/256)
-	
+
+def convert(document, canvas, items=None):
+	"""
+	Convert 'items' stored in 'canvas' to SVG 'document'.
+	If 'items' is None, then all items are convered.
+	"""
+
 	if items is None:	# default: all items
-		items = canvas.find_withtag('all')
+		items = canvas.find_all()
 	
-
-
 	for item in items:
-		tmp     = canvas.itemconfigure(item)
-		options = dict((v0, v4) for v0, v1, v2, v3, v4 in tmp.itervalues())
-
-		# skip hidden items
-		if ignore_hidden and options['state'] == 'hidden':
-			continue
-
+		
 		# skip unsupported items
-		type   = canvas.type(item)
-		if type not in item_types:
-			warn("Items of type '%s' are not supported." % type)
+		itemtype = canvas.type(item)
+		if itemtype not in supported_item_types:
+			warn("Items of type '%s' are not supported." % itemtype)
 			continue
-
-		# get coords
+		
+		# get item coords
 		coords = canvas.coords(item)
 
+		# get item options;
+		# options is a dict: opt. name -> opt. actual value
+		tmp     = canvas.itemconfigure(item)
+		options = dict((v0, v4) for v0, v1, v2, v3, v4 in tmp.itervalues())
+		
 		# get state of item
 		state = options['state']
 		if 'current' in options['tags']:
-			state = 'active'
-		elif state == '':
-			state = 'normal'
+			options['state'] = 'active'
+		elif options['state'] == '':
+			options['state'] = 'normal'
 		else:
 			# left state unchanged
-			assert state in ['normal', 'disabled']
+			assert options['state'] in ['normal', 'disabled', 'hidden']
+
+
+		def get(name, default=""):
+			if state == 'active' and options.get(state + name):
+				return options.get(state + name)
+			if state == 'disabled' and options.get(state + name):
+				return options.get(state + name)
+
+			if options.get(name):
+				return options.get(name)
+			else:
+				return default
 		
-		style = {}
-
-		def get(name):
-			if state in ['active', 'disabled']:
-				try:
-					return options[state+name]
-				except KeyError:
-					pass
-
-			try:
-				return options[name]
-			except KeyError:
-				return ""
-
 		
 		if type == 'line':
 			options['outline'] 			= ''
@@ -97,118 +85,87 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 			options['activefill'] 		= ''
 			options['disabledfill'] 	= ''
 
-		# setup style
-		outline = options['outline']
-		if state == 'active' and options['activeoutline'] != '':
-			outline = options['activeoutline']
-		if state == 'disabled' and options['disabledoutline'] != '':
-			outline = options['disabledoutline']
-		if outline != '':
-			style['stroke'] = color(outline)
-		else:
-			style['stroke'] = 'none'
-	
-		fill = options['fill']
-		if state == 'active' and options['activefill'] != '':
-				fill = options['activefill']
-		if state == 'disabled' and options['disabledfill'] != '':
-				fill = options['disabledfill']
+		style = { # initial default values
+			"stroke"		: "none",
+			"fill"			: "none",
+		}
+		
+		if get("outline") != "":
+			style["stroke"] = HTMLcolor(canvas, get("outline"))
 
-		if fill != '':
-			style['fill'] = color(fill)
-		else:
-			style['fill'] = 'none'
-
+		if get("fill") != "":
+			style["fill"] = HTMLcolor(canvas, get("fill"))
+		
+		
 		width = float(options['width'])
 		if state == 'active':
 			width = max(float(options['activewidth']), width)
 		elif state == 'disabled':
 			if float(options['disabledwidth']) > 0:
 				width = options['disabledwidth']
-			
-		style['stroke-width']	= width
-
+		
+		style['stroke-width'] = width
+		
 		if width:
-			dash = options['dash']
-			if state == 'active' and options['activedash'] != '':
-				dash = options['activedash']
-			if state == 'disabled' and options['disableddash'] != '':
-				dash = options['disableddash']
+			dash = canvas.itemcget(item, 'dash')
+			try:
+				dash = tuple(map(int, dash.split()))
+			except ValueError:
+				pass # int can't parse literal
 
 			if dash != '':
 				if type(dash) is str: 
-					linewidth = get('width')
-					tmp = []
-					for char in dash:
-						if char == "-":
-							tmp.append(4*linewidth)
-							tmp.append(2*linewidth)
-						else: # "."
-							tmp.append(2*linewidth)
-							tmp.append(2*linewidth)
+					linewidth = float(get('width'))
+					dash = parse_dash(dash, linewidth)
 				
-				style['stroke-dasharray'] = ",".join(definition)
+				style['stroke-dasharray'] = ",".join(map(str, dash))
 				if get('dashoffset'):
 					style['stroke-dashoffset'] = get('dashoffset')
 
 
-		if type == 'line':
-			# setup geometry
+
+		if itemtype == 'line':
+			# in this case, outline is set with fill property
+			style["fill"], style["stroke"] = style["stroke"], style["fill"]
+
 			if options['smooth'] in ['1', 'bezier']:
-				element = smoothline(coords)
+				element = smoothline(document, coords)
 			elif options['smooth'] in ['0']:
-				element = line(coords)
+				if len(coords) == 4: # segment
+					element = segment(document, coords)
+				else:
+					element = polyline(document, coords)
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
-				element = line(coords)
-
-			if get('joinstyle'):
-				style['stroke-linejoin'] = get('joinstyle')
-			else:
-				style['stroke-linejoin'] = 'miter'
-			
-			if get('capstyle'):
-				style['stroke-linecap'] = get('capstyle')
-			else:
-				style['stroke-linecap'] = 'butt'
-
-			style['stroke'], style['fill'] = style['fill'], style['stroke']
+				element = polyline(coords)
 		
-			# setup arrows (if any)
-			arrow = get('arrow')
-			if arrow:
-				shape = get('arrowshape')
+			style['stroke-linejoin'] = get('joinstyle', "miter")
+			style['stroke-linecap'] = get('capstyle', "butt")
 
-				if arrow == 'last' or arrow == 'both':
-					id = get_marker(shape, 'last', style['stroke'])
-					style['marker-end'] = 'url(#%s)' % id
-
-				if arrow == 'first' or arrow == 'both':
-					id = get_marker(shape, 'first', style['stroke'])
-					style['marker-start'] = 'url(#%s)' % id
-
-		elif type == 'polygon':
-			# setup geometry
+		elif itemtype == 'polygon':
 			if options['smooth'] in ['1', 'bezier']:
-				element = smoothpolygon(coords)
+				element = smoothpolygon(document, coords)
 			elif options['smooth'] in ['0']:
-				element = polygon(coords)
+				element = polygon(document, coords)
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = line(coords)
-			
-			if get('joinstyle'):
-				style['stroke-linejoin'] = get('joinstyle')
-			else:
-				style['stroke-linejoin'] = 'miter'
+		
+			style['stroke-linejoin'] = get('joinstyle', "miter")
+		
+		elif type == 'oval':
+			element = oval(document, coords)
 
-		elif type == 'oval':      element = oval(coords)
-		elif type == 'rectangle': element = rectangle(coords)
-		elif type == 'arc':       element = arc(coords, options['start'], options['extent'], options['style'])
+		elif type == 'rectangle':
+			element = rectangle(document, coords)
+
+		elif type == 'arc':
+			element = arc(document, coords, options['start'], options['extent'], options['style'])
+
 		elif type == 'text':
 			# setup geometry
 			xmin, ymin, xmax, ymax = canvas.bbox(item)
-			text = get_text(canvas, item)
+			text = canvas.get_text(canvas, item)
 			
 			x = coords[0]
 			element = setattribs(
@@ -255,66 +212,49 @@ def convert(canvas, items=None, ignore_hidden=True, ignore_fun=None):
 				style['text-decoration'] = 'underline'
 
 
-		# apply style
-		tmp = []
-		for k, v in style.iteritems():
-			if v:
-				tmp.append("%s:%s" % (k, v))
+		for attr, value in style.iteritems():
+			element.setAttribute(attr, str(value))
 
-		if tmp:
-			element.setAttribute('style', ';'.join(tmp))
-
-		svg.appendChild(element)
+		document.documentElement.appendChild(element)
 
 
-	if len(first_markers) or len(last_markers):
-		defs = tag('defs')
-		svg.insertBefore(defs, svg.firstChild)
-
-		for marker in first_markers.itervalues():
-			defs.appendChild(marker)
-		
-		for marker in last_markers.itervalues():
-			defs.appendChild(marker)
-		
 	return document
 
-
-def tag(name):
-	return document.createElement(name)
 
 def setattribs(element, **kwargs):
 	for k, v in kwargs.iteritems():
 		element.setAttribute(k, str(v))
 	return element
 
-def line(coords):
+
+def segment(document, coords):
 	# segment
-	if len(coords) == 4:
-		return setattribs(
-			tag('line'),
-			x1 = coords[0],
-			y1 = coords[1],
-			x2 = coords[2],
-			y2 = coords[3],
-		)
-	# polyline
-	else: 
-		points = []
-		for i in xrange(0, len(coords), 2):
-			points.append("%s,%s" % (coords[i], coords[i+1]))
+	return setattribs(
+		document.createElement('line'),
+		x1 = coords[0],
+		y1 = coords[1],
+		x2 = coords[2],
+		y2 = coords[3],
+	)
 	
-		return setattribs(
-			tag('polyline'),
-			points = ' '.join(points),
-		)
+
+def polyline(document, coords):
+	# polyline
+	points = []
+	for i in xrange(0, len(coords), 2):
+		points.append("%s,%s" % (coords[i], coords[i+1]))
+	
+	return setattribs(
+		document.createElement('polyline'),
+		points = ' '.join(points),
+	)
 #fed
 
 def lerp((xa, ya), (xb, yb), t):
 	return (xa + t*(xb-xa), ya + t*(yb-ya))
 
 def smoothline(coords):
-	element = tag('path')
+	element = document.createElement('path')
 	path    = []
 
 	points  = [(coords[i], coords[i+1]) for i  in xrange(0, len(coords), 2)]
@@ -345,8 +285,9 @@ def smoothline(coords):
 	element.setAttribute('d', ' '.join(path))
 	return element
 
-def rectangle(coords):
-	element = tag('rect')
+
+def rectangle(document, coords):
+	element = document.createElement('rect')
 	return setattribs(element,
 		x = coords[0],
 		y = coords[1],
@@ -355,18 +296,18 @@ def rectangle(coords):
 	)
 
 
-def polygon(coords):
+def polygon(document, coords):
 	points = []
 	for i in xrange(0, len(coords), 2):
 		points.append("%s,%s" % (coords[i], coords[i+1]))
 
-	return setattribs(tag('polygon'),
+	return setattribs(document.createElement('polygon'),
 		points = ' '.join(points)
 	)
 
 
-def smoothpolygon(coords):
-	element = tag('path')
+def smoothpolygon(document, coords):
+	element = document.createElement('path')
 	path    = []
 
 	points  = [(coords[i], coords[i+1]) for i  in xrange(0, len(coords), 2)]
@@ -391,12 +332,12 @@ def smoothpolygon(coords):
 	element.setAttribute('d', ' '.join(path))
 	return element
 
-def oval(coords):
+def oval(document, coords):
 	x1, y1, x2, y2 = coords
 
 	# circle
 	if x2-x1 == y2-y1:
-		return setattribs(tag('circle'),
+		return setattribs(document.createElement('circle'),
 			cx = (x1+x2)/2,
 			cy = (y1+y2)/2,
 			r  = abs(x2-x1)/2,
@@ -404,7 +345,7 @@ def oval(coords):
 	
 	# ellipse
 	else:
-		return setattribs(tag('ellipse'),
+		return setattribs(document.createElement('ellipse'),
 			cx = (x1+x2)/2,
 			cy = (y1+y2)/2,
 			rx = abs(x2-x1)/2,
@@ -414,9 +355,9 @@ def oval(coords):
 	return element
 
 
-from math import sin, cos, radians, pi
+import math
 
-def arc((x1, y1, x2, y2), start, extent, style):
+def arc(document, (x1, y1, x2, y2), start, extent, style):
 
 	cx = (x1 + x2)/2.0
 	cy = (y1 + y2)/2.0
@@ -424,15 +365,15 @@ def arc((x1, y1, x2, y2), start, extent, style):
 	rx = (x2 - x1)/2.0
 	ry = (y1 - y2)/2.0	# note: negative ry!
 	
-	start  = radians(float(start))
-	extent = radians(float(extent))
+	start  = math.radians(float(start))
+	extent = math.radians(float(extent))
 
 	# from SVG spec
-	x1 = rx * cos(start) + cx
-	y1 = ry * sin(start) + cy
+	x1 = rx * math.cos(start) + cx
+	y1 = ry * math.sin(start) + cy
 
-	x2 = rx * cos(start + extent) + cx
-	y2 = ry * sin(start + extent) + cy
+	x2 = rx * math.cos(start + extent) + cx
+	y2 = ry * math.sin(start + extent) + cy
 
 	if abs(extent) > pi:
 		fa = 1
@@ -461,62 +402,17 @@ def arc((x1, y1, x2, y2), start, extent, style):
 		path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
 		path.append('z')
 
-	return setattribs(tag('path'), d = ''.join(path))
+	return setattribs(document.createElement('path'), d = ''.join(path))
 
 
-#######################################################################
-# markers support
+def arrow_head(document, x1, y1, x2, y2, d1, d2, d3):
+	dx = x2 - x1
+	dy = y2 - y1
 
-first_markers = {}
-last_markers  = {}
+	d = math.sqrt(dx*dx + dy*dy)
+	t = (d1 + d2)/d
+	pass
 
-def get_marker(arrowshape, where, color):
-	global first_markers, last_markers
-
-	if where == 'first':
-		markers = first_markers
-	elif where == 'last':
-		markers = last_markers
-
-	try:
-		return markers[arrowshape, color].getAttribute('id')
-	except KeyError:
-		pass
-
-	(d2, d1, d3) = map(float, arrowshape)
-	if where == 'last':
-		points  = "%r,%r %r,%r %r,%r %r,%r" % (0.0, 0.0, -d1, -d3, -d2, 0.0, -d1, d3)
-		minx = min(-d1, -d2, 0.0)
-		maxx = max(-d1, -d2, 0.0)
-		w    = maxx-minx
-		refX = -minx
-	else:
-		points  = "%r,%r %r,%r %r,%r %r,%r" % (0.0, 0.0, d1, -d3, d2, 0.0, d1, d3)
-		minx = min(d1, d2, 0.0)
-		maxx = max(d1, d2, 0.0)
-		w    = maxx-minx
-		refX = -minx
-
-	polygon = tag('polygon')
-	polygon.setAttribute('points', points)
-	polygon.setAttribute('style', 'fill:%s' % color)
-
-	marker = tag('marker')
-	marker.appendChild(polygon)
-
-	setattribs(marker,
-		id           = '%s%d' % (where[0], len(markers)),
-		orient       = 'auto',
-		markerUnits  = 'userSpaceOnUse',
-		markerWidth  = w,
-		markerHeight = 2*d3,
-		viewBox      = '%r %r %r %r' % (minx, -d3, maxx-minx, 2*d3),
-		refX         = '%r' % refX,
-		refY         = '%r' % d3,
-	)
-
-	markers[arrowshape, color] = marker
-	return marker.getAttribute('id')
 
 def font_actual(tkapp, font):
 		tmp = tkapp.call('font', 'actual', font)
@@ -532,5 +428,104 @@ def font_metrics(tkapp, font, property=None):
 		)
 	else:
 		return int(tkapp.call('font', 'metrics', font, '-' + property))
+
+
+def HTMLcolor(canvas, color):
+	r, g, b = canvas.winfo_rgb(color)
+	return "#%02x%02x%02x" % (r/256, g/256, b/256)
+
+
+def parse_dash(string, width):
+	# DashConvert from tkCanvUtil.c
+	w = int(width + 0.5)
+	if w < 1: w = 1
+
+	n = len(string)
+	result = []
+	for i, c in enumerate(string):
+		if c == " " and len(result):
+			result[-1] += w + 1
+		elif c == "_":
+			result.append(8*w)
+			result.append(4*w)
+		elif c == "-":
+			result.append(6*w)
+			result.append(4*w)
+		elif c == ",":
+			result.append(4*w)
+			result.append(4*w)
+		elif c == ".":
+			result.append(2*w)
+			result.append(4*w)
+	return result
+
+
+if __name__ == '__main__':
+	import Tkinter
+	import random
+	from random import randint, seed, choice
+
+	D = 400
+
+	root = Tkinter.Tk()
+	canv = Tkinter.Canvas(bg="white", width=D, height=D)
+	canv.pack()
+
+	seed(100)
+
+	def rand_color():
+		return "#" + "".join(("%02x" % randint(0,255)) for i in xrange(6))
+	
+
+	def create_lines(n):
+		for i in xrange(n):
+			x1 = randint(0, D)
+			y1 = randint(0, D)
+			x2 = randint(0, D)
+			y2 = randint(0, D)
+			canv.create_line(
+				x1, y1, x2, y2,
+				fill  = rand_color(),
+				width = randint(0, 20)/2.0,
+			)
+
+	def random_joinstyle():
+		return choice(['bevel', 'miter', 'round'])
+	
+	
+	def random_capstyle():
+		return choice(['butt', 'projecting', 'round'])
+	
+	
+	def create_polylines(n, k):
+		for i in xrange(n):
+			points = []
+			for j in xrange(k):
+				points.append(randint(0, D))
+				points.append(randint(0, D))
+
+			item = canv.create_line(*points)
+			canv.itemconfigure(item, 
+				fill  = rand_color(),
+				width = 5,
+				#joinstyle = random_joinstyle(),
+				#capstyle  = random_capstyle(),
+				dash = (5, 10, 15),
+				#dash = "- . -",
+
+			)
+	
+	#create_lines(10)
+	create_polylines(5, 7)
+
+	doc = SVGdocument()
+	convert(doc, canv)
+	x1, y1, x2, y2 = canv.bbox('all')
+	doc.documentElement.setAttribute('width',  str(x2))
+	doc.documentElement.setAttribute('height', str(y2))
+	open('test.svg', 'w').write(doc.toprettyxml())
+
+	root.mainloop()
+
 
 # vim: ts=4 sw=4 nowrap noexpandtab
