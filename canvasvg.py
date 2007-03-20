@@ -140,7 +140,7 @@ def convert(document, canvas, items=None):
 				element = polyline(coords)
 		
 			style['stroke-linejoin'] = get('joinstyle', "miter")
-			style['stroke-linecap'] = get('capstyle', "butt")
+			style['stroke-linecap'] = capstyle[get('capstyle', "butt")]
 
 		elif itemtype == 'polygon':
 			if options['smooth'] in ['1', 'bezier']:
@@ -459,6 +459,9 @@ def parse_dash(string, width):
 			result.append(2*w)
 			result.append(4*w)
 	return result
+
+
+capstyle = {"butt": "butt", "round": "round", "projecting": "square"}
 
 
 if __name__ == '__main__':
