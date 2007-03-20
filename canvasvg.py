@@ -44,7 +44,7 @@ def convert(document, canvas, items=None):
 		if itemtype not in supported_item_types:
 			warn("Items of type '%s' are not supported." % itemtype)
 			continue
-		
+
 		# get item coords
 		coords = canvas.coords(item)
 
@@ -105,7 +105,7 @@ def convert(document, canvas, items=None):
 				width = options['disabledwidth']
 		
 		style['stroke-width'] = width
-		
+
 		if width:
 			dash = canvas.itemcget(item, 'dash')
 			try:
@@ -154,16 +154,16 @@ def convert(document, canvas, items=None):
 			style['fill-rule'] = 'evenodd'
 			style['stroke-linejoin'] = get('joinstyle', "miter")
 		
-		elif type == 'oval':
+		elif itemtype == 'oval':
 			element = oval(document, coords)
 
-		elif type == 'rectangle':
+		elif itemtype == 'rectangle':
 			element = rectangle(document, coords)
 
-		elif type == 'arc':
+		elif itemtype == 'arc':
 			element = arc(document, coords, options['start'], options['extent'], options['style'])
 
-		elif type == 'text':
+		elif itemtype == 'text':
 			# setup geometry
 			xmin, ymin, xmax, ymax = canvas.bbox(item)
 			text = canvas.get_text(canvas, item)
