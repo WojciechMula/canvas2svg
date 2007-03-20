@@ -150,7 +150,8 @@ def convert(document, canvas, items=None):
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = line(coords)
-		
+	
+			style['fill-rule'] = 'evenodd'
 			style['stroke-linejoin'] = get('joinstyle', "miter")
 		
 		elif type == 'oval':
