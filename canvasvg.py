@@ -256,7 +256,7 @@ def polyline(document, coords):
 def lerp((xa, ya), (xb, yb), t):
 	return (xa + t*(xb-xa), ya + t*(yb-ya))
 
-def smoothline(coords):
+def smoothline(document, coords):
 	element = document.createElement('path')
 	path    = []
 
