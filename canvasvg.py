@@ -5,14 +5,6 @@ supported_item_types = \
 	set(["line", "oval", "polygon", "rectangle", "text", "arc"])
 
 
-def canvas_get_text(canvas, text_id):
-        tk = canvas.tk
-        try:
-                result = tk.call(canvas._w, 'itemconfigure', text_id, '-text')
-                return tk.splitlist(result)[-1]
-        except TclError:
-                return ''
-
 def SVGdocument():
 	"""
 	Create default SVG document
@@ -35,10 +27,12 @@ def convert(document, canvas, items=None):
 	Convert 'items' stored in 'canvas' to SVG 'document'.
 	If 'items' is None, then all items are convered.
 	"""
+	tk = canvas.tk
 
 	if items is None:	# default: all items
 		items = canvas.find_all()
-	
+
+	elements = []
 	for item in items:
 		
 		# skip unsupported items
@@ -88,8 +82,8 @@ def convert(document, canvas, items=None):
 			options['disabledfill'] 	= ''
 
 		style = { # initial default values
-			"stroke"		: "none",
-			"fill"			: "none",
+			"stroke"	: "none",
+			"fill"		: "none",
 		}
 		
 		if get("outline") != "":
@@ -132,16 +126,17 @@ def convert(document, canvas, items=None):
 		if itemtype == 'line':
 			# in this case, outline is set with fill property
 			style["fill"], style["stroke"] = style["stroke"], style["fill"]
-			
+		
 			style['stroke-linecap'] = capstyle[get('capstyle', "butt")]
 
 			if options['smooth'] in ['1', 'bezier']:
 				element = smoothline(document, coords)
 			elif options['smooth'] == '0':
-				if len(coords) == 4: # segment
+				if len(coords) == 4:
+					# segment
 					element = segment(document, coords)
-
 				else:
+					# polyline
 					element = polyline(document, coords)
 					style['stroke-linejoin'] = get('joinstyle', "miter")
 			else:
@@ -149,14 +144,15 @@ def convert(document, canvas, items=None):
 				element = polyline(coords)
 				style['stroke-linejoin'] = get('joinstyle', "miter")
 
+			elements.append(element)
 			if options['arrow'] in [FIRST, BOTH]:
 				arrow = arrow_head(document, coords[2], coords[3], coords[0], coords[1], options['arrowshape'])
 				arrow.setAttribute('fill', style['stroke'])
-				document.documentElement.appendChild(arrow)
+				element.append(arrow)
 			if options['arrow'] in [LAST, BOTH]:
 				arrow = arrow_head(document, coords[-4], coords[-3], coords[-2], coords[-1], options['arrowshape'])
 				arrow.setAttribute('fill', style['stroke'])
-				document.documentElement.appendChild(arrow)
+				element.append(arrow)
 
 		elif itemtype == 'polygon':
 			if options['smooth'] in ['1', 'bezier']:
@@ -172,45 +168,63 @@ def convert(document, canvas, items=None):
 		
 		elif itemtype == 'oval':
 			element = oval(document, coords)
+			elements.append(element)
 
 		elif itemtype == 'rectangle':
+			elements.append(element)
 			element = rectangle(document, coords)
 
 		elif itemtype == 'arc':
 			element = arc(document, coords, options['start'], options['extent'], options['style'])
+			elements.append(element)
 
 		elif itemtype == 'text':
 			# setup geometry
 			xmin, ymin, xmax, ymax = canvas.bbox(item)
-			text = canvas.get_text(canvas, item)
 			
 			x = coords[0]
 			element = setattribs(
-				tag('text'),
+				document.createElement('text'),
 				x = x,
 				y = (ymin + font_metrics(tk, options['font'], 'ascent')) # set y at 'dominant-baseline'
 			)
-			element.appendChild(document.createTextNode(text))
+			elements.append(element)
+
+			element.appendChild(document.createTextNode(
+				canvas.itemcget(item, 'text')
+			))
 
 			# 2. Setup style
 			opt = font_actual(tk, options['font'])
 
 			# text-anchor
-			if options['anchor'] == 'center':
-				style['text-anchor'] = 'middle'
+			text_anchor = {
+				SE	: "end",
+				E	: "end",
+				NE	: "end",
+
+				SW	: "", # defaul value: "start"
+				W	: "",
+				NW	: "",
+
+				N	: "middle",
+				S	: "middle",
+				CENTER: "middle",
+			}
+			style["text-anchor"] = text_anchor[options["anchor"]]
 
 			# color
-			style['fill'] = color(get('fill'))
+			style['fill'] = HTMLcolor(canvas, get('fill'))
 
 			# family
 			style['font-family'] = opt['family']
 
 			# size
 			size = float(opt['size'])
-			if size > 0:
+			if size > 0: # size in points
 				style['font-size'] = "%spt" % size
-			else:
-				style['font-size'] = "%spx" % (-size)
+			else:        # size in pixels
+				style['font-size'] = "%s" % (-size)
 
 			# italic?
 			if opt['slant'] == 'italic':
@@ -230,12 +244,10 @@ def convert(document, canvas, items=None):
 
 
 		for attr, value in style.iteritems():
-			element.setAttribute(attr, str(value))
+			if value:
+				element.setAttribute(attr, str(value))
 
-		document.documentElement.appendChild(element)
-
-
-	return document
+	return elements
 
 
 def setattribs(element, **kwargs):
@@ -468,8 +480,11 @@ def font_metrics(tkapp, font, property=None):
 
 
 def HTMLcolor(canvas, color):
-	r, g, b = canvas.winfo_rgb(color)
-	return "#%02x%02x%02x" % (r/256, g/256, b/256)
+	if color:
+		r, g, b = canvas.winfo_rgb(color)
+		return "#%02x%02x%02x" % (r/256, g/256, b/256)
+	else:
+		return color
 
 
 def parse_dash(string, width):
@@ -497,74 +512,6 @@ def parse_dash(string, width):
 
 
 capstyle = {"butt": "butt", "round": "round", "projecting": "square"}
-
-
-if __name__ == '__main__':
-	import Tkinter
-	import random
-	from random import randint, seed, choice
-
-	D = 400
-
-	root = Tkinter.Tk()
-	canv = Tkinter.Canvas(bg="white", width=D, height=D)
-	canv.pack()
-
-	seed(100)
-
-	def rand_color():
-		return "#" + "".join(("%02x" % randint(0,255)) for i in xrange(6))
-	
-
-	def create_lines(n):
-		for i in xrange(n):
-			x1 = randint(0, D)
-			y1 = randint(0, D)
-			x2 = randint(0, D)
-			y2 = randint(0, D)
-			canv.create_line(
-				x1, y1, x2, y2,
-				fill  = rand_color(),
-				width = randint(0, 20)/2.0,
-			)
-
-	def random_joinstyle():
-		return choice(['bevel', 'miter', 'round'])
-	
-	
-	def random_capstyle():
-		return choice(['butt', 'projecting', 'round'])
-	
-	
-	def create_polylines(n, k):
-		for i in xrange(n):
-			points = []
-			for j in xrange(k):
-				points.append(randint(0, D))
-				points.append(randint(0, D))
-
-			item = canv.create_line(*points)
-			canv.itemconfigure(item, 
-				fill  = rand_color(),
-				width = 5,
-				#joinstyle = random_joinstyle(),
-				#capstyle  = random_capstyle(),
-				dash = (5, 10, 15),
-				#dash = "- . -",
-
-			)
-	
-	#create_lines(10)
-	create_polylines(5, 7)
-
-	doc = SVGdocument()
-	convert(doc, canv)
-	x1, y1, x2, y2 = canv.bbox('all')
-	doc.documentElement.setAttribute('width',  str(x2))
-	doc.documentElement.setAttribute('height', str(y2))
-	open('test.svg', 'w').write(doc.toprettyxml())
-
-	root.mainloop()
 
 
 # vim: ts=4 sw=4 nowrap noexpandtab
