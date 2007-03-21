@@ -366,17 +366,17 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	cy = (y1 + y2)/2.0
 
 	rx = (x2 - x1)/2.0
-	ry = (y1 - y2)/2.0	# note: negative ry!
+	ry = (y2 - y1)/2.0
 	
 	start  = math.radians(float(start))
 	extent = math.radians(float(extent))
 
 	# from SVG spec
-	x1 = rx * math.cos(start) + cx
-	y1 = ry * math.sin(start) + cy
+	x1 =  rx * math.cos(start) + cx
+	y1 = -ry * math.sin(start) + cy # XXX: ry is negated here
 
-	x2 = rx * math.cos(start + extent) + cx
-	y2 = ry * math.sin(start + extent) + cy
+	x2 =  rx * math.cos(start + extent) + cx
+	y2 = -ry * math.sin(start + extent) + cy # XXX: ry is negated here
 
 	if abs(extent) > math.pi:
 		fa = 1
@@ -390,12 +390,12 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	
 
 	path = []
-	if style == 'arc':
-		path.append('M%s,%s ' % (x1, y1))
+	if style == ARC:
+		path.append('M%s,%s' % (x1, y1))
 		path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
 	
-	elif style == 'chord':
-		path.append('M%s,%s ' % (x1, y1))
+	elif style == CHORD:
+		path.append('M%s,%s' % (x1, y1))
 		path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
 		path.append('z')
 
