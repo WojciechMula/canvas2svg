@@ -1,6 +1,7 @@
+# $Revision: 1.2 $
 from framework import *
 
-n = 30
+n = 100
 print "%d rects" % n
 
 for i in xrange(n):
@@ -9,7 +10,7 @@ for i in xrange(n):
 	x  = coord()
 	y  = coord()
 	canv.create_rectangle(x-rx, y-ry, x+rx, y+ry,
-		fill=random_color(), outline="#000")
+		fill=random_color(), outline=random_color())
 
 thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()

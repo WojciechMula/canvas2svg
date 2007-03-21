@@ -1,9 +1,9 @@
 from framework import *
 
-n  = 6
+n  = 30
 k1 = 3
 k2 = 15
-print "%d polygons with %d-%d vertices (black, 1-pixel width)" % (n, k1, k2)
+print "%d smoothed polygons with %d-%d vertices (black, 1-pixel width)" % (n, k1, k2)
 
 for i in xrange(n):
 	k = randint(k1, k2)
@@ -13,7 +13,7 @@ for i in xrange(n):
 		p.append(coord())
 
 	item = canv.create_polygon(*p)
-	canv.itemconfigure(item, fill="#dddddd", outline="black", smooth="1")
+	canv.itemconfigure(item, fill=random_color(), outline="black", smooth="1")
 
 thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()
