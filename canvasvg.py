@@ -140,10 +140,6 @@ def convert(document, canvas, items=None):
 			elif options['smooth'] == '0':
 				if len(coords) == 4: # segment
 					element = segment(document, coords)
-					if options['arrow'] in [LAST, BOTH]:
-						document.documentElement.appendChild(
-							arrow_head(document, coords[0], coords[1], coords[2], coords[3], options['arrowshape'])
-						)
 
 				else:
 					element = polyline(document, coords)
@@ -152,6 +148,15 @@ def convert(document, canvas, items=None):
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = polyline(coords)
 				style['stroke-linejoin'] = get('joinstyle', "miter")
+
+			if options['arrow'] in [FIRST, BOTH]:
+				arrow = arrow_head(document, coords[2], coords[3], coords[0], coords[1], options['arrowshape'])
+				arrow.setAttribute('fill', style['stroke'])
+				document.documentElement.appendChild(arrow)
+			if options['arrow'] in [LAST, BOTH]:
+				arrow = arrow_head(document, coords[-4], coords[-3], coords[-2], coords[-1], options['arrowshape'])
+				arrow.setAttribute('fill', style['stroke'])
+				document.documentElement.appendChild(arrow)
 
 		elif itemtype == 'polygon':
 			if options['smooth'] in ['1', 'bezier']:
@@ -441,7 +446,6 @@ def arrow_head(document, x0, y0, x1, y1, arrowshape):
 		xa, ya,
 		xb + yc, yb - xc,
 	]
-	print points
 	poly.setAttribute('points', ' '.join(map(str, points)))
 
 	return poly
