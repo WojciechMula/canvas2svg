@@ -1,3 +1,87 @@
+# -*- coding: iso-8859-2 -*-
+# $Id: canvasvg.py,v 1.20 2007-03-21 23:08:50 wojtek Exp $
+#
+# Tkinter canvas to SVG exporter
+#
+# license: BSD
+#
+# author: Wojciech Mu³a
+# e-mail: wojciech_mula@poczta.onet.pl
+# WWW   : http://wmula.republika.pl/
+
+"""
+Tkinter canvas to SVG exporter
+========================================================================
+
+This module provides function ``convert`` that convert all or selected
+items placed on given canvas object.
+
+Supported items:
+
+* lines
+* lines with arrows
+* polygons
+* smoothed lines and polygons
+* ovals (i.e. circle & ellipse)
+* arcs (all kind, i.e. ARC, CHORD, PIECE)
+* rectangles
+* text (**unwrapped** only i.e. attribute ``width = 0``)
+
+Unsupported items:
+
+* images
+* bitmaps
+* windows
+
+Stipples are not applied.
+
+
+Public functions
+------------------------------------------------------------------------
+
+``convert(document, canvas, items=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``document`` --- SVG document, object that support DOM, i.e. provides
+  ``createElement`` method etc. (function ``SVGdocument`` can be used
+  to get such object)
+* ``canvas`` --- Tkinter.Canvas object
+* ``items`` --- list of objects to convert; if ``None`` then all items
+  are converted
+
+``SVGdocument``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Takes no arguments, returns SVG document;  class provided in standard
+``xml.dom.minidom`` module is used.
+
+
+``saveall(filename, canvas, margin=10)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Helper function: saves whole canvas in SVG file, sets proper 
+dimensions, and viewport;  additional ``margin`` can be set.
+
+
+Downloads
+------------------------------------------------------------------------
+
+* `canvasvg.py <canvasvg.py>`_ --- source
+* `test.tar.gz <test.tar.gz>`_ --- test suite
+
+License & Author
+------------------------------------------------------------------------
+
+* License: BSD
+* Author: Wojciech Mu³a, e-mail: wojciech_mula@poczta.onet.pl
+"""
+
+__author__  = "Wojciech Mu³a <wojciech_mula@poczta.onet.pl>"
+__version__ = "$Revision: 1.20 $"
+
+
+__all__ = ["convert", "SVGdocument", "saveall"]
+
 import Tkinter
 from Tkconstants import *
 
