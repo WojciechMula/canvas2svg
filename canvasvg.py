@@ -110,16 +110,19 @@ def convert(document, canvas, items=None):
 
 		if width:
 			dash = canvas.itemcget(item, 'dash')
-			try:
-				dash = tuple(map(int, dash.split()))
-			except ValueError:
-				pass # int can't parse literal
+			if state == 'disabled' and canvas.itemcget(item, 'disableddash'):
+				dash = canvas.itemcget(item, 'disableddash')
+			elif state == 'active' and canvas.itemcget(item, 'activedash'):
+				dash = canvas.itemcget(item, 'activedash')
 
 			if dash != '':
-				if type(dash) is str: 
+				try:
+					dash = tuple(map(int, dash.split()))
+				except ValueError:
+					# int can't parse literal, dash defined with -.,_
 					linewidth = float(get('width'))
 					dash = parse_dash(dash, linewidth)
-				
+
 				style['stroke-dasharray'] = ",".join(map(str, dash))
 				if get('dashoffset'):
 					style['stroke-dashoffset'] = get('dashoffset')
@@ -440,8 +443,7 @@ def HTMLcolor(canvas, color):
 
 def parse_dash(string, width):
 	# DashConvert from tkCanvUtil.c
-	w = int(width + 0.5)
-	if w < 1: w = 1
+	w = max(1, int(width + 0.5))
 
 	n = len(string)
 	result = []
