@@ -8,6 +8,12 @@ D = 400
 def coord():
 	return randint(0, D)
 
+def random_color():
+	r = randint(0, 255)
+	g = randint(0, 255)
+	b = randint(0, 255)
+	return "#%02x%02x%02x" % (r, g, b)
+
 def test(canv, name, pretty=False):
 	doc = canvasvg.SVGdocument()
 	canvasvg.convert(doc, canv)
