@@ -16,7 +16,8 @@ def random_color():
 
 def test(canv, name, pretty=False):
 	doc = canvasvg.SVGdocument()
-	canvasvg.convert(doc, canv)
+	for element in canvasvg.convert(doc, canv):
+		doc.documentElement.appendChild(element)
 
 	doc.documentElement.setAttribute('width',  str(D))
 	doc.documentElement.setAttribute('height', str(D))

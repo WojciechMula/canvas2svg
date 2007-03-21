@@ -23,4 +23,3 @@ for i in xrange(n):
 
 thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()
-
