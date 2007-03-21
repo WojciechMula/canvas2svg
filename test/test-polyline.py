@@ -1,9 +1,9 @@
 from framework import *
+root.title("Polyline test ($Revision: 1.3 $)")
 
-n  = 10
+n  = 50
 k1 = 3
 k2 = 10
-print "%d polylines with %d-%d vertices (black, 1-pixel width)" % (n, k1, k2)
 
 for i in xrange(n):
 	k = randint(k1, k2)
@@ -12,7 +12,8 @@ for i in xrange(n):
 		p.append(coord())
 		p.append(coord())
 
-	canv.create_line(*p)
+	item = canv.create_line(*p)
+	canv.itemconfigure(item, fill=random_color())
 
 thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()

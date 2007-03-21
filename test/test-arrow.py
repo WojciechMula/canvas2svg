@@ -1,4 +1,5 @@
 from framework import *
+root.title("Arrows test ($Revision: 1.3 $)")
 
 for i in xrange(50):
 	d1 = randint(-10, 20)

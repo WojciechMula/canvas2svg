@@ -1,4 +1,5 @@
 from framework import *
+root.title("Text anchor test ($Revision: 1.2 $)")
 
 anchors = [NW, N, NE, W, CENTER, E, SW, S, SE]
 

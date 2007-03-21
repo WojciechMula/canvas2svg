@@ -1,8 +1,7 @@
 from framework import *
+root.title("Normal/disabled outline color ($Revision: 1.3 $)")
 
 n = 200
-print "%d different outline colors; red line are disabled" % n
-
 for i in xrange(n):
 	color = "blue"
 	if randint(0, 1000) > 200:

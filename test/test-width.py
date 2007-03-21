@@ -1,6 +1,5 @@
 from framework import *
-
-print "different line width"
+root.title("Normal/disabled outline width ($Revision: 1.3 $)")
 
 for i in xrange(1, D/20+1):
 	y = i*20

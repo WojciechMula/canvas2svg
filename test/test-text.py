@@ -1,4 +1,5 @@
 from framework import *
+root.title("Font family, size, slant & weight test ($Revision: 1.3 $)")
 
 texts = "Python Tkinter foo bar spam".split()
 
