@@ -1,9 +1,5 @@
-
 import Tkinter
 from Tkconstants import *
-
-
-
 
 
 def convert(document, canvas, items=None):
@@ -196,7 +192,7 @@ def convert(document, canvas, items=None):
 
 			style['fill'] = HTMLcolor(canvas, get('fill'))
 			style["text-anchor"] = text_anchor[options["anchor"]]
-			style['font-family'] = opt['family']
+			style['font-family'] = actual['family']
 
 			# size
 			size = float(actual['size'])
@@ -211,9 +207,9 @@ def convert(document, canvas, items=None):
 			# overstrike/underline
 			if actual['overstrike'] and actual['underline']:
 				style['text-decoration'] = 'underline line-through'
-			elif opt['overstrike']:
+			elif actual['overstrike']:
 				style['text-decoration'] = 'line-through'
-			elif opt['underline']:
+			elif actual['underline']:
 				style['text-decoration'] = 'underline'
 
 
@@ -238,6 +234,31 @@ def SVGdocument():
 		'xmlns', 'http://www.w3.org/2000/svg'
 	)
 	return document
+
+
+def saveall(filename, canvas, margin=10):
+	doc = SVGdocument()
+
+	for element in convert(doc, canvas):
+		doc.documentElement.appendChild(element)
+
+	x1, y1, x2, y2 = canvas.bbox(ALL)
+	
+	x1 -= margin
+	y1 -= margin
+	x2 += margin
+	y2 += margin
+
+	dx = x2-x1
+	dy = y2-y1
+	doc.documentElement.setAttribute('width',  "%0.3f" % dx)
+	doc.documentElement.setAttribute('height', "%0.3f" % dy)
+	doc.documentElement.setAttribute(
+		'viewBox', "%0.3f %0.3f %0.3f %0.3f" % (x1, y1, dx, dy))
+
+	file = open(filename, 'w')
+	file.write(doc.toxml())
+	file.close()
 
 
 #========================================================================
@@ -491,10 +512,10 @@ def arrow_head(document, x0, y0, x1, y1, arrowshape):
 
 def font_actual(tkapp, font):
 	"actual font parameters"
-		tmp = tkapp.call('font', 'actual', font)
-		return dict(
-			(tmp[i][1:], tmp[i+1]) for i in xrange(0, len(tmp), 2)
-		)
+	tmp = tkapp.call('font', 'actual', font)
+	return dict(
+		(tmp[i][1:], tmp[i+1]) for i in xrange(0, len(tmp), 2)
+	)
 	
 def font_metrics(tkapp, font, property=None):
 	if property is None:
