@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-2 -*-
-# $Id: canvasvg.py,v 1.20 2007-03-21 23:08:50 wojtek Exp $
+# $Id: canvasvg.py,v 1.21 2007-03-21 23:35:47 wojtek Exp $
 #
 # Tkinter canvas to SVG exporter
 #
@@ -23,7 +23,7 @@ Supported items:
 * polygons
 * smoothed lines and polygons
 * ovals (i.e. circle & ellipse)
-* arcs (all kind, i.e. ARC, CHORD, PIECE)
+* arcs (all kind, i.e. ARC, CHORD, PIESLICE)
 * rectangles
 * text (**unwrapped** only i.e. attribute ``width = 0``)
 
@@ -77,7 +77,7 @@ License & Author
 """
 
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
-__version__ = "$Revision: 1.20 $"
+__version__ = "$Revision: 1.21 $"
 
 
 __all__ = ["convert", "SVGdocument", "saveall"]
