@@ -1,8 +1,7 @@
 from framework import *
+root.title("Arc geometry test ($Revision: 1.3 $)")
 
 n = 7
-print "%d arcs" % n 
-
 arcstyle = [PIESLICE, CHORD, ARC]
 
 for j, style in enumerate(arcstyle):
@@ -14,10 +13,12 @@ for j, style in enumerate(arcstyle):
 
 		k  = i+1
 		canv.create_arc(x-rx, y-ry, x+rx, y+ry,
-			start=k*5, extent=k*45, style=style,
-			fill="#dddddd"
+			start	= k*5,
+			extent	= k*45,
+			style	= style,
+			fill	= random_fill(),
+			outline	= random_color(),
 		)
-
 
 thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()
