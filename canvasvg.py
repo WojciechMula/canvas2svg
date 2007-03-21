@@ -1,7 +1,9 @@
 from Tkinter import TclError
+from Tkconstants import *
 
 supported_item_types = \
 	set(["line", "oval", "polygon", "rectangle", "text", "arc"])
+
 
 def canvas_get_text(canvas, text_id):
         tk = canvas.tk
@@ -76,11 +78,11 @@ def convert(document, canvas, items=None):
 				return default
 		
 		
-		if type == 'line':
+		if itemtype == 'line':
 			options['outline'] 			= ''
 			options['activeoutline'] 	= ''
 			options['disabledoutline'] 	= ''
-		elif type == 'arc' and options['style'] == ARC:
+		elif itemtype == 'arc' and options['style'] == ARC:
 			options['fill'] 			= ''
 			options['activefill'] 		= ''
 			options['disabledfill'] 	= ''
@@ -376,15 +378,15 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	x2 = rx * math.cos(start + extent) + cx
 	y2 = ry * math.sin(start + extent) + cy
 
-	if abs(extent) > pi:
+	if abs(extent) > math.pi:
 		fa = 1
 	else:
 		fa = 0
 
 	if extent > 0.0:
-		fs = 1
-	else:
 		fs = 0
+	else:
+		fs = 1
 	
 
 	path = []
