@@ -1,6 +1,6 @@
 from framework import *
 
-n  = 5
+n  = 6
 k1 = 3
 k2 = 15
 print "%d polygons with %d-%d vertices (black, 1-pixel width)" % (n, k1, k2)
