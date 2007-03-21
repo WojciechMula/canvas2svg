@@ -1,0 +1,5 @@
+style: style.css
+rest: canvasvg.py
+
+copy: canvasvg.py
+copy: test.tar.gz
