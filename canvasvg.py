@@ -2,36 +2,24 @@
 import Tkinter
 from Tkconstants import *
 
-supported_item_types = \
-	set(["line", "oval", "polygon", "rectangle", "text", "arc"])
 
 
-def SVGdocument():
-	"""
-	Create default SVG document
-	"""
-	import xml.dom.minidom
-	implementation = xml.dom.minidom.getDOMImplementation()
-	doctype = implementation.createDocumentType(
-		"svg", "-//W3C//DTD SVG 1.1//EN",
-		"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"
-	)
-	document= implementation.createDocument(None, "svg", doctype)
-	document.documentElement.setAttribute(
-		'xmlns', 'http://www.w3.org/2000/svg'
-	)
-	return document
 
 
 def convert(document, canvas, items=None):
 	"""
 	Convert 'items' stored in 'canvas' to SVG 'document'.
 	If 'items' is None, then all items are convered.
+
+	Return list of XML elements
 	"""
 	tk = canvas.tk
 
 	if items is None:	# default: all items
 		items = canvas.find_all()
+
+	supported_item_types = \
+		set(["line", "oval", "polygon", "rectangle", "text", "arc"])
 
 	elements = []
 	for item in items:
@@ -53,18 +41,18 @@ def convert(document, canvas, items=None):
 		# get state of item
 		state = options['state']
 		if 'current' in options['tags']:
-			options['state'] = 'active'
+			options['state'] = ACTIVE
 		elif options['state'] == '':
 			options['state'] = 'normal'
 		else:
 			# left state unchanged
-			assert options['state'] in ['normal', 'disabled', 'hidden']
+			assert options['state'] in ['normal', DISABLED, 'hidden']
 
 
 		def get(name, default=""):
-			if state == 'active' and options.get(state + name):
+			if state == ACTIVE and options.get(state + name):
 				return options.get(state + name)
-			if state == 'disabled' and options.get(state + name):
+			if state == DISABLED and options.get(state + name):
 				return options.get(state + name)
 
 			if options.get(name):
@@ -82,34 +70,31 @@ def convert(document, canvas, items=None):
 			options['activefill'] 		= ''
 			options['disabledfill'] 	= ''
 
-		style = { # initial default values
-			"stroke"	: "none",
-			"fill"		: "none",
-		}
-		
-		if get("outline") != "":
-			style["stroke"] = HTMLcolor(canvas, get("outline"))
+		style = {}
+		style["stroke"] = HTMLcolor(canvas, get("outline"))
 
-		if get("fill") != "":
+		if get("fill"):
 			style["fill"] = HTMLcolor(canvas, get("fill"))
-		
+		else:
+			style["fill"] = "none"
+
 		
 		width = float(options['width'])
-		if state == 'active':
+		if state == ACTIVE:
 			width = max(float(options['activewidth']), width)
-		elif state == 'disabled':
+		elif state == DISABLED:
 			if float(options['disabledwidth']) > 0:
 				width = options['disabledwidth']
 	
 		if width != 1.0:
 			style['stroke-width'] = width
-
+	
 		
 		if width:
 			dash = canvas.itemcget(item, 'dash')
-			if state == 'disabled' and canvas.itemcget(item, 'disableddash'):
+			if state == DISABLED and canvas.itemcget(item, 'disableddash'):
 				dash = canvas.itemcget(item, 'disableddash')
-			elif state == 'active' and canvas.itemcget(item, 'activedash'):
+			elif state == ACTIVE and canvas.itemcget(item, 'activedash'):
 				dash = canvas.itemcget(item, 'activedash')
 
 			if dash != '':
@@ -120,17 +105,15 @@ def convert(document, canvas, items=None):
 					linewidth = float(get('width'))
 					dash = parse_dash(dash, linewidth)
 
-				style['stroke-dasharray'] = ",".join(map(str, dash))
-				if get('dashoffset'):
-					style['stroke-dashoffset'] = get('dashoffset')
-
+				style['stroke-dasharray']  = ",".join(map(str, dash))
+				style['stroke-dashoffset'] = options['dashoffset']
 
 
 		if itemtype == 'line':
 			# in this case, outline is set with fill property
-			style["fill"], style["stroke"] = style["stroke"], style["fill"]
+			style["fill"], style["stroke"] = "none", style["fill"]
 		
-			style['stroke-linecap'] = capstyle[get('capstyle', "butt")]
+			style['stroke-linecap'] = cap_style[options['capstyle']]
 
 			if options['smooth'] in ['1', 'bezier']:
 				element = smoothline(document, coords)
@@ -141,55 +124,66 @@ def convert(document, canvas, items=None):
 				else:
 					# polyline
 					element = polyline(document, coords)
-					style['stroke-linejoin'] = get('joinstyle', "miter")
+					style['fill'] = "none"
+					style['stroke-linejoin'] = join_style[options['joinstyle']]
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = polyline(coords)
-				style['stroke-linejoin'] = get('joinstyle', "miter")
+				style['stroke-linejoin'] = join_style[options['joinstyle']]
 
 			elements.append(element)
 			if options['arrow'] in [FIRST, BOTH]:
 				arrow = arrow_head(document, coords[2], coords[3], coords[0], coords[1], options['arrowshape'])
 				arrow.setAttribute('fill', style['stroke'])
-				element.append(arrow)
+				elements.append(arrow)
 			if options['arrow'] in [LAST, BOTH]:
 				arrow = arrow_head(document, coords[-4], coords[-3], coords[-2], coords[-1], options['arrowshape'])
 				arrow.setAttribute('fill', style['stroke'])
-				element.append(arrow)
+				elements.append(arrow)
 
 		elif itemtype == 'polygon':
 			if options['smooth'] in ['1', 'bezier']:
 				element = smoothpolygon(document, coords)
-			elif options['smooth'] in ['0']:
+			elif options['smooth'] == '0':
 				element = polygon(document, coords)
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
-				element = line(coords)
-	
+				element = polygon(document, coords)
+
+			elements.append(element)
+
 			style['fill-rule'] = 'evenodd'
-			style['stroke-linejoin'] = get('joinstyle', "miter")
+			style['stroke-linejoin'] = join_style[options['joinstyle']]
 		
 		elif itemtype == 'oval':
 			element = oval(document, coords)
 			elements.append(element)
 
 		elif itemtype == 'rectangle':
-			elements.append(element)
 			element = rectangle(document, coords)
+			elements.append(element)
 
 		elif itemtype == 'arc':
 			element = arc(document, coords, options['start'], options['extent'], options['style'])
+			if options['style'] == ARC:
+				style['fill'] = "none"
+
 			elements.append(element)
 
 		elif itemtype == 'text':
+			style['stroke'] = '' # no stroke
+			
 			# setup geometry
 			xmin, ymin, xmax, ymax = canvas.bbox(item)
 			
 			x = coords[0]
+
+			# set y at 'dominant-baseline'
+			y = ymin + font_metrics(tk, options['font'], 'ascent') 
+			
 			element = setattribs(
 				document.createElement('text'),
-				x = x,
-				y = (ymin + font_metrics(tk, options['font'], 'ascent')) # set y at 'dominant-baseline'
+				x = x, y = y 
 			)
 			elements.append(element)
 
@@ -198,47 +192,24 @@ def convert(document, canvas, items=None):
 			))
 
 			# 2. Setup style
-			opt = font_actual(tk, options['font'])
+			actual = font_actual(tk, options['font'])
 
-			# text-anchor
-			text_anchor = {
-				SE	: "end",
-				E	: "end",
-				NE	: "end",
-
-				SW	: "", # defaul value: "start"
-				W	: "",
-				NW	: "",
-
-				N	: "middle",
-				S	: "middle",
-				CENTER: "middle",
-			}
-			style["text-anchor"] = text_anchor[options["anchor"]]
-
-			# color
 			style['fill'] = HTMLcolor(canvas, get('fill'))
-
-			# family
+			style["text-anchor"] = text_anchor[options["anchor"]]
 			style['font-family'] = opt['family']
 
 			# size
-			size = float(opt['size'])
+			size = float(actual['size'])
 			if size > 0: # size in points
 				style['font-size'] = "%spt" % size
 			else:        # size in pixels
 				style['font-size'] = "%s" % (-size)
 
-			# italic?
-			if opt['slant'] == 'italic':
-				style['font-style'] = 'italic'
-
-			# bold?
-			if opt['weight'] == 'bold':
-				style['font-weight'] = 'bold'
+			style['font-style']  = font_style[actual['slant']]
+			style['font-weight'] = font_weight[actual['weight']]
 
 			# overstrike/underline
-			if opt['overstrike'] and opt['underline']:
+			if actual['overstrike'] and actual['underline']:
 				style['text-decoration'] = 'underline line-through'
 			elif opt['overstrike']:
 				style['text-decoration'] = 'line-through'
@@ -247,10 +218,26 @@ def convert(document, canvas, items=None):
 
 
 		for attr, value in style.iteritems():
-			if value:
+			if value: # create only nonempty attributes
 				element.setAttribute(attr, str(value))
 
 	return elements
+
+
+def SVGdocument():
+	"Create default SVG document"
+
+	import xml.dom.minidom
+	implementation = xml.dom.minidom.getDOMImplementation()
+	doctype = implementation.createDocumentType(
+		"svg", "-//W3C//DTD SVG 1.1//EN",
+		"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"
+	)
+	document= implementation.createDocument(None, "svg", doctype)
+	document.documentElement.setAttribute(
+		'xmlns', 'http://www.w3.org/2000/svg'
+	)
+	return document
 
 
 #========================================================================
@@ -327,9 +314,9 @@ def polygon(document, coords):
 
 def smoothpolygon(document, coords):
 	"smoothed filled polygon"
+	
 	element = document.createElement('path')
 	path    = []
-
 	points  = [(coords[i], coords[i+1]) for i  in xrange(0, len(coords), 2)]
 	def pt(points):
 		p = points
@@ -420,19 +407,18 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 		fs = 1
 	
 	path = []
+	# common: arc
+	path.append('M%s,%s' % (x1, y1))
+	path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
+	
 	if style == ARC:
-		path.append('M%s,%s' % (x1, y1))
-		path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
+		pass
 	
 	elif style == CHORD:
-		path.append('M%s,%s' % (x1, y1))
-		path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
 		path.append('z')
 
 	else: # default: pieslice
-		path.append('M%s,%s' % (cx, cy))
-		path.append('L%s,%s' % (x1, y1))
-		path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
+		path.append('L%s,%s' % (cx, cy))
 		path.append('z')
 
 	return setattribs(document.createElement('path'), d = ''.join(path))
@@ -446,22 +432,23 @@ def setattribs(element, **kwargs):
 		element.setAttribute(k, str(v))
 	return element
 
+
 def lerp((xa, ya), (xb, yb), t):
 	return (xa + t*(xb-xa), ya + t*(yb-ya))
 
-sd = set([
-	0x00, 0x11, 0x22, 0x33, 
-	0x44, 0x55, 0x66, 0x77, 
-	0x88, 0x99, 0xaa, 0xbb, 
-	0xcc, 0xdd, 0xee, 0xff
-])
+
 def HTMLcolor(canvas, color):
 	"returns Tk color in form '#rrggbb' or '#rgb'"
 	if color:
 		# r, g, b \in [0..2**16]
-		r, g, b = map(lambda c: "%02x" % (c/256), canvas.winfo_rgb(color))
+
+		r, g, b = map(
+			lambda c: "%02x" % (c/256),
+			canvas.winfo_rgb(color)
+		)
+
 		if (r[0] == r[1]) and (g[0] == g[1]) and (b[0] == b[1]):
-			print "here!"
+			# shorter form #rgb
 			return "#" + r[0] + g[0] + b[0]
 		else:
 			return "#" + r + g + b
@@ -471,6 +458,7 @@ def HTMLcolor(canvas, color):
 
 def arrow_head(document, x0, y0, x1, y1, arrowshape):
 	"make arrow head at (x1,y1), arrowshape is tuple (d1, d2, d3)"
+	import math
 	 
 	dx = x1 - x0
 	dy = y1 - y0
@@ -502,6 +490,7 @@ def arrow_head(document, x0, y0, x1, y1, arrowshape):
 
 
 def font_actual(tkapp, font):
+	"actual font parameters"
 		tmp = tkapp.call('font', 'actual', font)
 		return dict(
 			(tmp[i][1:], tmp[i+1]) for i in xrange(0, len(tmp), 2)
@@ -545,11 +534,41 @@ def parse_dash(string, width):
 #========================================================================
 # property translation tables
 
-capstyle = {
+cap_style = {
 	"butt"		: "",	# butt: SVG default
 	"round"		: "round",
 	"projecting": "square",
 	""			: "",	# butt: default in Tk & SVG
+}
+
+join_style = {
+	"bevel"	: "bevel",
+	"miter"	: "",		# SVG default
+	"round"	: "round"
+}
+
+text_anchor = {
+	SE	: "end",
+	E	: "end",
+	NE	: "end",
+
+	SW	: "", # SVG defaul (value "start")
+	W	: "",
+	NW	: "",
+
+	N	: "middle",
+	S	: "middle",
+	CENTER: "middle",
+}
+
+font_style = {
+	"italic"	: "italic",
+	"roman"		: "" # SVG default 
+}
+
+font_weight = {
+	"bold"		: "bold",
+	"normal"	: "" # SVG default
 }
 
 
