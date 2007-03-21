@@ -1,61 +1,65 @@
-# $Revision: 1.3 $
 from framework import *
-
-print "different dashes"
-
-def line(y, dash, width=1):
-	canv.create_line(20, y, D-20, y, width=width, dash=dash)
+root.title("Dash patterns test ($Revision: 1.4 $)")
 
 # dash pattern defined by list of length
-line(10, (5))
-line(20, (5, 10))
-line(30, (5, 10, 5))
-line(40, (5, 10, 5, 20))
-line(50, (5, 10, 5, 20, 5))
-line(50, (5, 10, 5, 20, 5, 30))
+patterns1 = [
+	(5),
+	(5, 10),
+	(5, 10, 5),
+	(5, 10, 5, 20),
+	(5, 10, 5, 20, 5),
+	(5, 10, 5, 20, 5, 30),
+]
+
+top = 1
+for i, pattern in enumerate(patterns1):
+	y = (top + i)*10
+	canv.create_line(20, y, D-20, y, dash=pattern)
 
 # dash pattern defined by string
-line(70,  "-. _,  -")
-line(80,  "-. _,  -", width=2)
-line(90,  "-. _,  -", width=3)
-line(110, "-. _,  -", width=4)
-line(120, "_.", width=2)
-line(130, "-.", width=3)
-line(140, "- - ", width=4)
+patterns2 = [
+	("-. _,  -",	1),
+	("-. _,  -",	2),
+	("-. _,  -",	3),
+	("-. _,  -",	4),
+	("_.",		2),
+	("-.",		3),
+	("- - ",	4),
+]
+
+top += len(patterns1)
+for i, (pattern, width) in enumerate(patterns2):
+	y = (top + i)*10
+	canv.create_line(20, y, D-20, y, dash=pattern, width=width)
+
 
 # space
-line(150, ".", width=4)
-line(160, ". ", width=4)
-line(170, ".  ", width=4)
-line(180, ".   ", width=4)
-line(190, ".    ", width=4)
+patterns3 = [
+	".",
+	". ",
+	".  ",
+	".   ",
+	".    ",
+]
+
+top += len(patterns2)
+for i, pattern in enumerate(patterns1):
+	y = (top + i)*10
+	canv.create_line(20, y, D-20, y, dash=pattern)
+
 
 # disableddash
-def line2(y, dash, width=1):
-	canv.create_line(20, y, D-20, y, width=width, state=DISABLED,
-		dash=(5,5), disableddash=dash)
-
-line2(210, (5))
-line2(220, (5, 10))
-line2(230, (5, 10, 5))
-line2(240, (5, 10, 5, 20))
-line2(250, (5, 10, 5, 20, 5))
-line2(250, (5, 10, 5, 20, 5, 30))
+top += len(patterns3)
+for i, pattern in enumerate(patterns1):
+	y = (top + i)*10
+	canv.create_line(20, y, D-20, y, width=2, state=DISABLED,
+		dash=(5,5), disableddash=pattern)
 
 # dashoffset
-def line3(y, offset):
-	canv.create_line(20, y, D-20, y, dash=(4,6), dashoffset=offset)
-
-line3(300, 0)
-line3(310, 1)
-line3(320, 2)
-line3(330, 3)
-line3(340, 4)
-line3(350, 5)
-line3(360, 6)
-line3(370, 7)
-line3(380, 8)
-line3(390, 9)
+top += len(patterns1)
+for i in xrange(11):
+	y = (top + i)*10
+	canv.create_line(20, y, D-20, y, dash=(4,6), dashoffset=i)
 
 thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()
