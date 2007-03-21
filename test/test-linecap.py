@@ -1,6 +1,5 @@
 from framework import *
-
-print "line cap"
+root.title("Line cap style test ($Revision: 1.4 $)")
 
 capstyle = ["butt", "projecting", "round"]
 

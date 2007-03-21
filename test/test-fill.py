@@ -1,9 +1,9 @@
 from framework import *
+root.title("Fill test ($Revision: 1.4 $)")
 
 n  = 10
 k1 = 3
 k2 = 15
-print "%d polygons with %d-%d vertices" % (n, k1, k2)
 
 for i in xrange(n):
 	k = randint(k1, k2)
