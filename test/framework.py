@@ -14,6 +14,12 @@ def random_color():
 	b = randint(0, 255)
 	return "#%02x%02x%02x" % (r, g, b)
 
+def random_fill():
+	if randint(0, 1000) > 500:
+		return random_color()
+	else:
+		return ""
+
 def test(canv, name, pretty=False):
 	doc = canvasvg.SVGdocument()
 	for element in canvasvg.convert(doc, canv):
@@ -29,7 +35,7 @@ def test(canv, name, pretty=False):
 		f.write(doc.toxml())
 	f.close()
 	os.system("inkview %s.svg" % name)
-	raise SystemExit
+	root.destroy()
 
 
 root = Tkinter.Tk()
