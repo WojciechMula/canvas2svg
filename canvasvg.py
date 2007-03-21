@@ -132,20 +132,26 @@ def convert(document, canvas, items=None):
 		if itemtype == 'line':
 			# in this case, outline is set with fill property
 			style["fill"], style["stroke"] = style["stroke"], style["fill"]
+			
+			style['stroke-linecap'] = capstyle[get('capstyle', "butt")]
 
 			if options['smooth'] in ['1', 'bezier']:
 				element = smoothline(document, coords)
-			elif options['smooth'] in ['0']:
+			elif options['smooth'] == '0':
 				if len(coords) == 4: # segment
 					element = segment(document, coords)
+					if options['arrow'] in [LAST, BOTH]:
+						document.documentElement.appendChild(
+							arrow_head(document, coords[0], coords[1], coords[2], coords[3], options['arrowshape'])
+						)
+
 				else:
 					element = polyline(document, coords)
+					style['stroke-linejoin'] = get('joinstyle', "miter")
 			else:
 				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = polyline(coords)
-		
-			style['stroke-linejoin'] = get('joinstyle', "miter")
-			style['stroke-linecap'] = capstyle[get('capstyle', "butt")]
+				style['stroke-linejoin'] = get('joinstyle', "miter")
 
 		elif itemtype == 'polygon':
 			if options['smooth'] in ['1', 'bezier']:
@@ -411,13 +417,34 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	return setattribs(document.createElement('path'), d = ''.join(path))
 
 
-def arrow_head(document, x1, y1, x2, y2, d1, d2, d3):
-	dx = x2 - x1
-	dy = y2 - y1
+def arrow_head(document, x0, y0, x1, y1, arrowshape):
+	d1, d2, d3 = map(float, arrowshape)
+	P0 = (x0, y0)
+	P1 = (x1, y1)
+	dx = x1 - x0
+	dy = y1 - y0
 
 	d = math.sqrt(dx*dx + dy*dy)
-	t = (d1 + d2)/d
-	pass
+	if d == 0.0: # XXX: equal, no "close enough"
+		return
+
+	xa, ya = lerp(P1, P0, d1/d)
+	xb, yb = lerp(P1, P0, d2/d)
+
+	t3 = d3/d
+	xc, yc = dx*t3, dy*t3
+
+	poly = document.createElement('polygon')
+	points = [
+		x1, y1,
+		xb - yc, yb + xc,
+		xa, ya,
+		xb + yc, yb - xc,
+	]
+	print points
+	poly.setAttribute('points', ' '.join(map(str, points)))
+
+	return poly
 
 
 def font_actual(tkapp, font):
