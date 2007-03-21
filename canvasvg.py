@@ -1,4 +1,5 @@
-from Tkinter import TclError
+
+import Tkinter
 from Tkconstants import *
 
 supported_item_types = \
@@ -99,9 +100,11 @@ def convert(document, canvas, items=None):
 		elif state == 'disabled':
 			if float(options['disabledwidth']) > 0:
 				width = options['disabledwidth']
-		
-		style['stroke-width'] = width
+	
+		if width != 1.0:
+			style['stroke-width'] = width
 
+		
 		if width:
 			dash = canvas.itemcget(item, 'dash')
 			if state == 'disabled' and canvas.itemcget(item, 'disableddash'):
@@ -250,14 +253,11 @@ def convert(document, canvas, items=None):
 	return elements
 
 
-def setattribs(element, **kwargs):
-	for k, v in kwargs.iteritems():
-		element.setAttribute(k, str(v))
-	return element
-
+#========================================================================
+# canvas elements geometry
 
 def segment(document, coords):
-	# segment
+	"polyline with 2 vertices"
 	return setattribs(
 		document.createElement('line'),
 		x1 = coords[0],
@@ -265,10 +265,10 @@ def segment(document, coords):
 		x2 = coords[2],
 		y2 = coords[3],
 	)
-	
+
 
 def polyline(document, coords):
-	# polyline
+	"polyline with more then 2 vertices"
 	points = []
 	for i in xrange(0, len(coords), 2):
 		points.append("%s,%s" % (coords[i], coords[i+1]))
@@ -277,12 +277,10 @@ def polyline(document, coords):
 		document.createElement('polyline'),
 		points = ' '.join(points),
 	)
-#fed
 
-def lerp((xa, ya), (xb, yb), t):
-	return (xa + t*(xb-xa), ya + t*(yb-ya))
 
 def smoothline(document, coords):
+	"smoothed polyline"
 	element = document.createElement('path')
 	path    = []
 
@@ -304,7 +302,8 @@ def smoothline(document, coords):
 			c = p[i+1]
 
 			yield lerp(a, b, 0.5), b, lerp(b, c, 0.5)
-		
+
+
 	for i, (A, B, C) in enumerate(pt(points)):
 		if i == 0:
 			path.append("M%s,%s Q%s,%s %s,%s" % (A[0], A[1], B[0], B[1], C[0], C[1]))
@@ -315,17 +314,8 @@ def smoothline(document, coords):
 	return element
 
 
-def rectangle(document, coords):
-	element = document.createElement('rect')
-	return setattribs(element,
-		x = coords[0],
-		y = coords[1],
-		width  = coords[2]-coords[0],
-		height = coords[3]-coords[1],
-	)
-
-
 def polygon(document, coords):
+	"filled polygon"
 	points = []
 	for i in xrange(0, len(coords), 2):
 		points.append("%s,%s" % (coords[i], coords[i+1]))
@@ -336,6 +326,7 @@ def polygon(document, coords):
 
 
 def smoothpolygon(document, coords):
+	"smoothed filled polygon"
 	element = document.createElement('path')
 	path    = []
 
@@ -361,7 +352,19 @@ def smoothpolygon(document, coords):
 	element.setAttribute('d', ' '.join(path))
 	return element
 
+
+def rectangle(document, coords):
+	element = document.createElement('rect')
+	return setattribs(element,
+		x = coords[0],
+		y = coords[1],
+		width  = coords[2]-coords[0],
+		height = coords[3]-coords[1],
+	)
+
+
 def oval(document, coords):
+	"circle/ellipse"
 	x1, y1, x2, y2 = coords
 
 	# circle
@@ -384,10 +387,11 @@ def oval(document, coords):
 	return element
 
 
-import math
-
 def arc(document, (x1, y1, x2, y2), start, extent, style):
-
+	"arc, pieslice (filled), arc with chord (filled)"
+	
+	import math
+	
 	cx = (x1 + x2)/2.0
 	cy = (y1 + y2)/2.0
 
@@ -397,7 +401,8 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	start  = math.radians(float(start))
 	extent = math.radians(float(extent))
 
-	# from SVG spec
+	# from SVG spec:
+	# http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
 	x1 =  rx * math.cos(start) + cx
 	y1 = -ry * math.sin(start) + cy # XXX: ry is negated here
 
@@ -414,7 +419,6 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	else:
 		fs = 1
 	
-
 	path = []
 	if style == ARC:
 		path.append('M%s,%s' % (x1, y1))
@@ -434,24 +438,59 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 	return setattribs(document.createElement('path'), d = ''.join(path))
 
 
+#========================================================================
+# helpers
+
+def setattribs(element, **kwargs):
+	for k, v in kwargs.iteritems():
+		element.setAttribute(k, str(v))
+	return element
+
+def lerp((xa, ya), (xb, yb), t):
+	return (xa + t*(xb-xa), ya + t*(yb-ya))
+
+sd = set([
+	0x00, 0x11, 0x22, 0x33, 
+	0x44, 0x55, 0x66, 0x77, 
+	0x88, 0x99, 0xaa, 0xbb, 
+	0xcc, 0xdd, 0xee, 0xff
+])
+def HTMLcolor(canvas, color):
+	"returns Tk color in form '#rrggbb' or '#rgb'"
+	if color:
+		# r, g, b \in [0..2**16]
+		r, g, b = map(lambda c: "%02x" % (c/256), canvas.winfo_rgb(color))
+		if (r[0] == r[1]) and (g[0] == g[1]) and (b[0] == b[1]):
+			print "here!"
+			return "#" + r[0] + g[0] + b[0]
+		else:
+			return "#" + r + g + b
+	else:
+		return color
+
+
 def arrow_head(document, x0, y0, x1, y1, arrowshape):
-	d1, d2, d3 = map(float, arrowshape)
-	P0 = (x0, y0)
-	P1 = (x1, y1)
+	"make arrow head at (x1,y1), arrowshape is tuple (d1, d2, d3)"
+	 
 	dx = x1 - x0
 	dy = y1 - y0
 
+	poly = document.createElement('polygon')
+	
 	d = math.sqrt(dx*dx + dy*dy)
 	if d == 0.0: # XXX: equal, no "close enough"
-		return
+		return poly
 
+	d1, d2, d3 = map(float, arrowshape)
+	P0 = (x0, y0)
+	P1 = (x1, y1)
+	
 	xa, ya = lerp(P1, P0, d1/d)
 	xb, yb = lerp(P1, P0, d2/d)
 
-	t3 = d3/d
-	xc, yc = dx*t3, dy*t3
+	t = d3/d
+	xc, yc = dx*t, dy*t
 
-	poly = document.createElement('polygon')
 	points = [
 		x1, y1,
 		xb - yc, yb + xc,
@@ -459,7 +498,6 @@ def arrow_head(document, x0, y0, x1, y1, arrowshape):
 		xb + yc, yb - xc,
 	]
 	poly.setAttribute('points', ' '.join(map(str, points)))
-
 	return poly
 
 
@@ -479,16 +517,10 @@ def font_metrics(tkapp, font, property=None):
 		return int(tkapp.call('font', 'metrics', font, '-' + property))
 
 
-def HTMLcolor(canvas, color):
-	if color:
-		r, g, b = canvas.winfo_rgb(color)
-		return "#%02x%02x%02x" % (r/256, g/256, b/256)
-	else:
-		return color
-
-
 def parse_dash(string, width):
-	# DashConvert from tkCanvUtil.c
+	"parse dash pattern specified with string"
+	
+	# DashConvert from {tk-sources}/generic/tkCanvUtil.c
 	w = max(1, int(width + 0.5))
 
 	n = len(string)
@@ -510,8 +542,15 @@ def parse_dash(string, width):
 			result.append(4*w)
 	return result
 
+#========================================================================
+# property translation tables
 
-capstyle = {"butt": "butt", "round": "round", "projecting": "square"}
+capstyle = {
+	"butt"		: "",	# butt: SVG default
+	"round"		: "round",
+	"projecting": "square",
+	""			: "",	# butt: default in Tk & SVG
+}
 
 
 # vim: ts=4 sw=4 nowrap noexpandtab
