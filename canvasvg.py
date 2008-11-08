@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-2 -*-
-# $Id: canvasvg.py,v 1.21 2007-03-21 23:35:47 wojtek Exp $
+# $Id: canvasvg.py,v 1.22 2008-11-08 16:48:00 wojtek Exp $
 #
 # Tkinter canvas to SVG exporter
 #
@@ -77,7 +77,7 @@ License & Author
 """
 
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
-__version__ = "$Revision: 1.21 $"
+__version__ = "$Revision: 1.22 $"
 
 
 __all__ = ["convert", "SVGdocument", "saveall"]
@@ -86,10 +86,14 @@ import Tkinter
 from Tkconstants import *
 
 
-def convert(document, canvas, items=None):
+def convert(document, canvas, items=None, tounicode=lambda text: text):
 	"""
 	Convert 'items' stored in 'canvas' to SVG 'document'.
 	If 'items' is None, then all items are convered.
+
+	textrans is a function that get text and returns
+	it's unicode representation. It should be used when
+	national characters are used on canvas.
 
 	Return list of XML elements
 	"""
@@ -268,7 +272,7 @@ def convert(document, canvas, items=None):
 			elements.append(element)
 
 			element.appendChild(document.createTextNode(
-				canvas.itemcget(item, 'text')
+				tounicode(canvas.itemcget(item, 'text'))
 			))
 
 			# 2. Setup style
@@ -320,7 +324,7 @@ def SVGdocument():
 	return document
 
 
-def saveall(filename, canvas, margin=10):
+def saveall(filename, canvas, margin=10, tounicode=lambda text: text):
 	doc = SVGdocument()
 
 	for element in convert(doc, canvas):
