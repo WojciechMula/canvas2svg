@@ -20,9 +20,10 @@ def random_fill():
 	else:
 		return ""
 
-def test(canv, name, pretty=False):
+
+def test(canv, name, pretty=False, tounicode=lambda text: text):
 	doc = canvasvg.SVGdocument()
-	for element in canvasvg.convert(doc, canv):
+	for element in canvasvg.convert(doc, canv, tounicode=tounicode):
 		doc.documentElement.appendChild(element)
 
 	doc.documentElement.setAttribute('width',  str(D))
