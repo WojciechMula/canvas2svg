@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-2 -*-
-# $Id: canvasvg.py,v 1.22 2008-11-08 16:48:00 wojtek Exp $
+# $Id: canvasvg.py,v 1.23 2008-11-08 18:11:19 wojtek Exp $
 #
 # Tkinter canvas to SVG exporter
 #
@@ -12,6 +12,9 @@
 """
 Tkinter canvas to SVG exporter
 ========================================================================
+
+:Added on: 1.12.2006
+:Last update: 8.11.2008 --- added ``tounicode``, optional argument
 
 This module provides function ``convert`` that convert all or selected
 items placed on given canvas object.
@@ -39,8 +42,8 @@ Stipples are not applied.
 Public functions
 ------------------------------------------------------------------------
 
-``convert(document, canvas, items=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``convert(document, canvas, items=None, tounicode=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``document`` --- SVG document, object that support DOM, i.e. provides
   ``createElement`` method etc. (function ``SVGdocument`` can be used
@@ -48,6 +51,11 @@ Public functions
 * ``canvas`` --- Tkinter.Canvas object
 * ``items`` --- list of objects to convert; if ``None`` then all items
   are converted
+* ``tounicode`` --- user function that should return proper unicode
+  string if Tkinter app use other then ASCII encoding. By default
+  ``tounicode = lambda text: unicode(text).encode('utf-8')``.
+  Thanks to **Jan Böcker** who provided solution.
+
 
 ``SVGdocument``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,8 +64,8 @@ Takes no arguments, returns SVG document;  class provided in standard
 ``xml.dom.minidom`` module is used.
 
 
-``saveall(filename, canvas, margin=10)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``saveall(filename, canvas, margin=10, tounicode=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Helper function: saves whole canvas in SVG file, sets proper 
 dimensions, and viewport;  additional ``margin`` can be set.
@@ -66,8 +74,8 @@ dimensions, and viewport;  additional ``margin`` can be set.
 Downloads
 ------------------------------------------------------------------------
 
-* `canvasvg.py <canvasvg.py>`_ --- source
-* `test.tar.gz <test.tar.gz>`_ --- test suite
+* `canvasvg.py <canvasvg.py>`_ --- source %%%UPDATE%%%
+* `test.tar.gz <test.tar.gz>`_ --- test suite %%%UPDATE%%%
 
 License & Author
 ------------------------------------------------------------------------
@@ -77,7 +85,7 @@ License & Author
 """
 
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
-__version__ = "$Revision: 1.22 $"
+__version__ = "$Revision: 1.23 $"
 
 
 __all__ = ["convert", "SVGdocument", "saveall"]
@@ -86,12 +94,12 @@ import Tkinter
 from Tkconstants import *
 
 
-def convert(document, canvas, items=None, tounicode=lambda text: text):
+def convert(document, canvas, items=None, tounicode=None):
 	"""
 	Convert 'items' stored in 'canvas' to SVG 'document'.
 	If 'items' is None, then all items are convered.
 
-	textrans is a function that get text and returns
+	tounicode is a function that get text and returns
 	it's unicode representation. It should be used when
 	national characters are used on canvas.
 
@@ -104,6 +112,9 @@ def convert(document, canvas, items=None, tounicode=lambda text: text):
 
 	supported_item_types = \
 		set(["line", "oval", "polygon", "rectangle", "text", "arc"])
+	
+	if tounicode is None:
+		tounicode = lambda text: unicode(text).encode("utf-8")
 
 	elements = []
 	for item in items:
@@ -324,10 +335,10 @@ def SVGdocument():
 	return document
 
 
-def saveall(filename, canvas, margin=10, tounicode=lambda text: text):
+def saveall(filename, canvas, margin=10, tounicode=None):
 	doc = SVGdocument()
 
-	for element in convert(doc, canvas):
+	for element in convert(doc, canvas, tounicode):
 		doc.documentElement.appendChild(element)
 
 	x1, y1, x2, y2 = canvas.bbox(ALL)
