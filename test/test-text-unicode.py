@@ -1,6 +1,6 @@
 # -*- encoding: iso-8859-2 -*-
 from framework import *
-root.title("Font family, size, slant & weight test ($Revision: 1.1 $)")
+root.title("Font family, size, slant & weight test ($Revision: 1.2 $)")
 
 texts = "Python Tkinter foo bar spam �곶濼".split()
                                    # polish diacritical characters
@@ -8,6 +8,8 @@ texts = "Python Tkinter foo bar spam �곶濼".split()
 def tounicode(text):
 	return unicode(text, 'iso-8859-2').encode('utf-8')
 
+# use utf-8 words
+texts = [tounicode(word) for word in texts]
 
 for i in xrange(200):
 	x = coord()
@@ -34,5 +36,5 @@ for i in xrange(200):
 			rand_slant()),
 	)
 
-thread.start_new_thread(test, (canv, __file__, True, tounicode))
+thread.start_new_thread(test, (canv, __file__, True))
 root.mainloop()
