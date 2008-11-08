@@ -21,7 +21,7 @@ def random_fill():
 		return ""
 
 
-def test(canv, name, pretty=False, tounicode=lambda text: text):
+def test(canv, name, pretty=False, tounicode=None):
 	doc = canvasvg.SVGdocument()
 	for element in canvasvg.convert(doc, canv, tounicode=tounicode):
 		doc.documentElement.appendChild(element)
