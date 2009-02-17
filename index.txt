@@ -1,0 +1,72 @@
+Tkinter canvas to SVG exporter
+========================================================================
+
+:Added on: 1.12.2006
+:Last update: 8.11.2008 --- added ``tounicode``, optional argument
+
+This module provides function ``convert`` that convert all or selected
+items placed on given canvas object.
+
+Supported items:
+
+* lines
+* lines with arrows
+* polygons
+* smoothed lines and polygons
+* ovals (i.e. circle & ellipse)
+* arcs (all kind, i.e. ARC, CHORD, PIESLICE)
+* rectangles
+* text (**unwrapped** only i.e. attribute ``width = 0``)
+
+Unsupported items:
+
+* images
+* bitmaps
+* windows
+
+Stipples are not applied.
+
+
+Public functions
+------------------------------------------------------------------------
+
+``convert(document, canvas, items=None, tounicode=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``document`` --- SVG document, object that support DOM, i.e. provides
+  ``createElement`` method etc. (function ``SVGdocument`` can be used
+  to get such object)
+* ``canvas`` --- Tkinter.Canvas object
+* ``items`` --- list of objects to convert; if ``None`` then all items
+  are converted
+* ``tounicode`` --- user function that should return proper unicode
+  string if Tkinter app use other then ASCII encoding. By default
+  ``tounicode = lambda text: unicode(text).encode('utf-8')``.
+  Thanks to **Jan Böcker** who provided solution.
+
+
+``SVGdocument``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Takes no arguments, returns SVG document;  class provided in standard
+``xml.dom.minidom`` module is used.
+
+
+``saveall(filename, canvas, margin=10, tounicode=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Helper function: saves whole canvas in SVG file, sets proper 
+dimensions, and viewport;  additional ``margin`` can be set.
+
+
+Downloads
+------------------------------------------------------------------------
+
+* `canvasvg.py <canvasvg.py>`_ --- source %%%UPDATE%%%
+* `test.tar.gz <test.tar.gz>`_ --- test suite %%%UPDATE%%%
+
+License & Author
+------------------------------------------------------------------------
+
+* License: BSD
+* Author: Wojciech Mu³a, e-mail: wojciech_mula@poczta.onet.pl
