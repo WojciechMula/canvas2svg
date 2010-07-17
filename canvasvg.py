@@ -7,7 +7,7 @@
 #
 # author: Wojciech Mu³a
 # e-mail: wojciech_mula@poczta.onet.pl
-# WWW   : http://wmula.republika.pl/
+# WWW   : http://0x80.pl/
 
 """
 Tkinter canvas to SVG exporter
