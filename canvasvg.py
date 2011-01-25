@@ -64,11 +64,12 @@ Takes no arguments, returns SVG document;  class provided in standard
 ``xml.dom.minidom`` module is used.
 
 
-``saveall(filename, canvas, margin=10, tounicode=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``saveall(filename, canvas, items=None, margin=10, tounicode=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Helper function: saves whole canvas in SVG file, sets proper 
-dimensions, and viewport;  additional ``margin`` can be set.
+Helper function: saves whole canvas or selected items in SVG file,
+sets proper  dimensions, and viewport;  additional ``margin`` can
+be set.
 
 
 Downloads
@@ -92,6 +93,11 @@ __all__ = ["convert", "SVGdocument", "saveall"]
 
 import Tkinter
 from Tkconstants import *
+
+try:
+	warn
+except NameError:
+	from warnings import warn
 
 
 def convert(document, canvas, items=None, tounicode=None):
@@ -335,13 +341,31 @@ def SVGdocument():
 	return document
 
 
-def saveall(filename, canvas, margin=10, tounicode=None):
+def saveall(filename, canvas, items=None, margin=10, tounicode=None):
 	doc = SVGdocument()
 
-	for element in convert(doc, canvas, tounicode):
+	for element in convert(doc, canvas, items, tounicode):
 		doc.documentElement.appendChild(element)
 
-	x1, y1, x2, y2 = canvas.bbox(ALL)
+	if items is None:
+		x1, y1, x2, y2 = canvas.bbox(ALL)
+	else:
+		x1 = None
+		y1 = None
+		x2 = None
+		y2 = None
+		for item in items:
+			X1, Y1, X2, Y2 = canvas.bbox(item)
+			if x1 is None:
+				x1 = X1
+				y1 = Y1
+				x2 = X2
+				y2 = Y2
+			else:
+				x1 = min(x1, X1)
+				x2 = max(x2, X2)
+				y1 = min(y1, Y1)
+				y2 = max(y2, Y2)
 	
 	x1 -= margin
 	y1 -= margin
