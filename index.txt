@@ -2,7 +2,9 @@ Tkinter canvas to SVG exporter
 ========================================================================
 
 :Added on: 1.12.2006
-:Last update: 8.11.2008 --- added ``tounicode``, optional argument
+:Last update: 25.01.2011 --- update ``saveall``: use list of items to export
+:Update: 8.11.2008 --- added ``tounicode``, optional argument
+
 
 This module provides function ``convert`` that convert all or selected
 items placed on given canvas object.
@@ -52,11 +54,12 @@ Takes no arguments, returns SVG document;  class provided in standard
 ``xml.dom.minidom`` module is used.
 
 
-``saveall(filename, canvas, margin=10, tounicode=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``saveall(filename, canvas, items=None, margin=10, tounicode=None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Helper function: saves whole canvas in SVG file, sets proper 
-dimensions, and viewport;  additional ``margin`` can be set.
+Helper function: saves whole canvas or selected items in SVG file,
+sets proper  dimensions, and viewport;  additional ``margin`` can
+be set.
 
 
 Downloads
