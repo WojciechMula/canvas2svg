@@ -15,6 +15,7 @@ Tkinter canvas to SVG exporter
 
 :Added on: 1.12.2006
 :Update: 2011-02-20 --- python3 compatibility
+:Update: 2011-01-25 --- update ``saveall``: use list of items to export
 :Update: 2008-11-08 --- added ``tounicode``, optional argument
 
 This module provides function ``convert`` that convert all or selected
