@@ -1,8 +1,25 @@
-from Tkconstants import *
-from random      import randint, seed, choice
-import Tkinter, os
+try:
+	# python3
+	import tkinter as Tkinter
+	from tkinter.constants import *
+except ImportError:
+	# python2
+	import Tkinter
+	from Tkconstants import *
+
+from random import randint, seed, choice
+import os
 import canvasvg
-import thread
+
+try:
+	import thread
+except ImportError:
+	import _thread as thread
+
+try:
+	xrange
+except NameError:
+	xrange = range
 
 D = 400
 def coord():

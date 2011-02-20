@@ -14,7 +14,8 @@ Tkinter canvas to SVG exporter
 ========================================================================
 
 :Added on: 1.12.2006
-:Last update: 8.11.2008 --- added ``tounicode``, optional argument
+:Update: 2011-02-20 --- python3 compatibility
+:Update: 2008-11-08 --- added ``tounicode``, optional argument
 
 This module provides function ``convert`` that convert all or selected
 items placed on given canvas object.
@@ -91,8 +92,15 @@ __version__ = "$Revision: 1.23 $"
 
 __all__ = ["convert", "SVGdocument", "saveall"]
 
-import Tkinter
-from Tkconstants import *
+try:
+	# python3
+	import tkinter
+	from tkinter.constants import *
+except ImportError:
+	# python2
+	import Tkinter as tkinter
+	from Tkconstants import *
+
 
 try:
 	warn
@@ -120,7 +128,13 @@ def convert(document, canvas, items=None, tounicode=None):
 		set(["line", "oval", "polygon", "rectangle", "text", "arc"])
 	
 	if tounicode is None:
-		tounicode = lambda text: unicode(text).encode("utf-8")
+		try:
+			# python3
+			bytes
+			tounicode = lambda x: x
+		except NameError:
+			# python2
+			tounicode  = lambda text: str(text).encode("utf-8")
 
 	elements = []
 	for item in items:
@@ -137,7 +151,7 @@ def convert(document, canvas, items=None, tounicode=None):
 		# get item options;
 		# options is a dict: opt. name -> opt. actual value
 		tmp     = canvas.itemconfigure(item)
-		options = dict((v0, v4) for v0, v1, v2, v3, v4 in tmp.itervalues())
+		options = dict((v0, v4) for v0, v1, v2, v3, v4 in tmp.values())
 		
 		# get state of item
 		state = options['state']
@@ -216,7 +230,7 @@ def convert(document, canvas, items=None, tounicode=None):
 		
 			style['stroke-linecap'] = cap_style[options['capstyle']]
 
-			if options['smooth'] in ['1', 'bezier']:
+			if options['smooth'] in ['1', 'bezier', 'true']:
 				element = smoothline(document, coords)
 			elif options['smooth'] == '0':
 				if len(coords) == 4:
@@ -243,7 +257,7 @@ def convert(document, canvas, items=None, tounicode=None):
 				elements.append(arrow)
 
 		elif itemtype == 'polygon':
-			if options['smooth'] in ['1', 'bezier']:
+			if options['smooth'] in ['1', 'bezier', 'true']:
 				element = smoothpolygon(document, coords)
 			elif options['smooth'] == '0':
 				element = polygon(document, coords)
@@ -318,7 +332,7 @@ def convert(document, canvas, items=None, tounicode=None):
 				style['text-decoration'] = 'underline'
 
 
-		for attr, value in style.iteritems():
+		for attr, value in style.items():
 			if value: # create only nonempty attributes
 				element.setAttribute(attr, str(value))
 
@@ -401,7 +415,7 @@ def segment(document, coords):
 def polyline(document, coords):
 	"polyline with more then 2 vertices"
 	points = []
-	for i in xrange(0, len(coords), 2):
+	for i in range(0, len(coords), 2):
 		points.append("%s,%s" % (coords[i], coords[i+1]))
 	
 	return setattribs(
@@ -415,7 +429,7 @@ def smoothline(document, coords):
 	element = document.createElement('path')
 	path    = []
 
-	points  = [(coords[i], coords[i+1]) for i  in xrange(0, len(coords), 2)]
+	points  = [(coords[i], coords[i+1]) for i  in range(0, len(coords), 2)]
 	def pt(points):
 		x0, y0 = points[0]
 		x1, y1 = points[1]
@@ -427,7 +441,7 @@ def smoothline(document, coords):
 
 		p = [p0] + points[1:-1] + [pn]
 
-		for i in xrange(1, len(points)-1):
+		for i in range(1, len(points)-1):
 			a = p[i-1]
 			b = p[i]
 			c = p[i+1]
@@ -448,7 +462,7 @@ def smoothline(document, coords):
 def polygon(document, coords):
 	"filled polygon"
 	points = []
-	for i in xrange(0, len(coords), 2):
+	for i in range(0, len(coords), 2):
 		points.append("%s,%s" % (coords[i], coords[i+1]))
 
 	return setattribs(document.createElement('polygon'),
@@ -461,11 +475,11 @@ def smoothpolygon(document, coords):
 	
 	element = document.createElement('path')
 	path    = []
-	points  = [(coords[i], coords[i+1]) for i  in xrange(0, len(coords), 2)]
+	points  = [(coords[i], coords[i+1]) for i  in range(0, len(coords), 2)]
 	def pt(points):
 		p = points
 		n = len(points)
-		for i in xrange(0, len(points)):
+		for i in range(0, len(points)):
 			a = p[(i-1) % n]
 			b = p[i]
 			c = p[(i+1) % n]
@@ -518,9 +532,9 @@ def oval(document, coords):
 	return element
 
 
-def arc(document, (x1, y1, x2, y2), start, extent, style):
+def arc(document, bounding_rect, start, extent, style):
 	"arc, pieslice (filled), arc with chord (filled)"
-	
+	(x1, y1, x2, y2) = bounding_rect
 	import math
 	
 	cx = (x1 + x2)/2.0
@@ -572,12 +586,14 @@ def arc(document, (x1, y1, x2, y2), start, extent, style):
 # helpers
 
 def setattribs(element, **kwargs):
-	for k, v in kwargs.iteritems():
+	for k, v in kwargs.items():
 		element.setAttribute(k, str(v))
 	return element
 
 
-def lerp((xa, ya), (xb, yb), t):
+def lerp(vec1, vec2, t):
+	(xa, ya) = vec1
+	(xb, yb) = vec2
 	return (xa + t*(xb-xa), ya + t*(yb-ya))
 
 
@@ -586,10 +602,7 @@ def HTMLcolor(canvas, color):
 	if color:
 		# r, g, b \in [0..2**16]
 
-		r, g, b = map(
-			lambda c: "%02x" % (c/256),
-			canvas.winfo_rgb(color)
-		)
+		r, g, b = ["%02x" % (c/256) for c in canvas.winfo_rgb(color)]
 
 		if (r[0] == r[1]) and (g[0] == g[1]) and (b[0] == b[1]):
 			# shorter form #rgb
@@ -613,7 +626,7 @@ def arrow_head(document, x0, y0, x1, y1, arrowshape):
 	if d == 0.0: # XXX: equal, no "close enough"
 		return poly
 
-	d1, d2, d3 = map(float, arrowshape)
+	d1, d2, d3 = list(map(float, arrowshape))
 	P0 = (x0, y0)
 	P1 = (x1, y1)
 	
@@ -637,14 +650,14 @@ def font_actual(tkapp, font):
 	"actual font parameters"
 	tmp = tkapp.call('font', 'actual', font)
 	return dict(
-		(tmp[i][1:], tmp[i+1]) for i in xrange(0, len(tmp), 2)
+		(tmp[i][1:], tmp[i+1]) for i in range(0, len(tmp), 2)
 	)
 	
 def font_metrics(tkapp, font, property=None):
 	if property is None:
 		tmp = tkapp.call('font', 'metrics', font)
 		return dict(
-			(tmp[i][1:], int(tmp[i+1])) for i in xrange(0, len(tmp), 2)
+			(tmp[i][1:], int(tmp[i+1])) for i in range(0, len(tmp), 2)
 		)
 	else:
 		return int(tkapp.call('font', 'metrics', font, '-' + property))
