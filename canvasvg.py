@@ -1,11 +1,11 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 # $Id: canvasvg.py,v 1.23 2008-11-08 18:11:19 wojtek Exp $
 #
 # Tkinter canvas to SVG exporter
 #
 # license: BSD
 #
-# author: Wojciech Mu≥a
+# author: Wojciech Mu≈Ça
 # e-mail: wojciech_mula@poczta.onet.pl
 # WWW   : http://0x80.pl/
 
@@ -56,7 +56,7 @@ Public functions
 * ``tounicode`` --- user function that should return proper unicode
   string if Tkinter app use other then ASCII encoding. By default
   ``tounicode = lambda text: unicode(text).encode('utf-8')``.
-  Thanks to **Jan Bˆcker** who provided solution.
+  Thanks to **Jan B√∂cker** who provided solution.
 
 
 ``SVGdocument``
@@ -84,10 +84,10 @@ License & Author
 ------------------------------------------------------------------------
 
 * License: BSD
-* Author: Wojciech Mu≥a, e-mail: wojciech_mula@poczta.onet.pl
+* Author: Wojciech Mu≈Ça, e-mail: wojciech_mula@poczta.onet.pl
 """
 
-__author__  = "Wojciech Mu≥a <wojciech_mula@poczta.onet.pl>"
+__author__  = "Wojciech Mu≈Ça <wojciech_mula@poczta.onet.pl>"
 __version__ = "$Revision: 1.23 $"
 
 
