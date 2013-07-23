@@ -9,6 +9,9 @@
 # e-mail: wojciech_mula@poczta.onet.pl
 # WWW   : http://0x80.pl/
 
+# Modified for plink by Marc Culler on 15 July 2013.
+# Added support for "raw" smoothed lines, which use cubic splines.
+
 """
 Tkinter canvas to SVG exporter
 ========================================================================
@@ -233,6 +236,8 @@ def convert(document, canvas, items=None, tounicode=None):
 
 			if options['smooth'] in ['1', 'bezier', 'true']:
 				element = smoothline(document, coords)
+			elif options['smooth'] == 'raw':
+				element = cubic_bezier(document, coords)
 			elif options['smooth'] == '0':
 				if len(coords) == 4:
 					# segment
@@ -456,6 +461,17 @@ def smoothline(document, coords):
 		else:
 			path.append("T%s,%s" % (C[0], C[1]))
 
+	element.setAttribute('d', ' '.join(path))
+	return element
+
+def cubic_bezier(document, coords):
+	"cubic bezier polyline"
+	element = document.createElement('path')
+	points  = [(coords[i], coords[i+1]) for i  in range(0, len(coords), 2)]
+	path    = ["M%s %s" %points[0]]
+	for n in xrange(1, len(points), 3):
+		A, B, C = points[n:n+3]
+		path.append("C%s,%s %s,%s %s,%s" % (A[0], A[1], B[0], B[1], C[0], C[1]))
 	element.setAttribute('d', ' '.join(path))
 	return element
 
