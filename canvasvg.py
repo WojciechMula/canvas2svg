@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Id: canvasvg.py,v 1.23 2008-11-08 18:11:19 wojtek Exp $
-#
 # Tkinter canvas to SVG exporter
 #
 # license: BSD
@@ -9,12 +7,7 @@
 # e-mail: wojciech_mula@poczta.onet.pl
 # WWW   : http://0x80.pl/
 
-# Modified for plink by Marc Culler on 15 July 2013.
-# Added support for "raw" smoothed lines, which use cubic splines.
-
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
-__version__ = "$Revision: 1.23 $"
-
 
 __all__ = ["convert", "SVGdocument", "saveall"]
 
