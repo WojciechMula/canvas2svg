@@ -21,10 +21,12 @@ except ImportError:
 	from Tkconstants import *
 
 
-try:
-	warn
-except NameError:
-	from warnings import warn
+def warn(msg):
+	from sys import stderr
+
+	stderr.write('canvas2svg warning: ')
+	stderr.write(msg)
+	stderr.write('\n')
 
 
 def convert(document, canvas, items=None, tounicode=None):
