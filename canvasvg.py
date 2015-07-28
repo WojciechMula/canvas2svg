@@ -258,7 +258,7 @@ def convert(document, canvas, items=None, tounicode=None):
 
 
 		for attr, value in style.items():
-			if value: # create only nonempty attributes
+			if value != '': # create only nonempty attributes
 				element.setAttribute(attr, str(value))
 
 	return elements
