@@ -84,6 +84,8 @@ def convert(document, canvas, items=None, tounicode=None):
 			# left state unchanged
 			assert options['state'] in ['normal', DISABLED, 'hidden']
 
+                # skip hidden items
+                if options['state'] == 'hidden': continue
 
 		def get(name, default=""):
 			if state == ACTIVE and options.get(state + name):
