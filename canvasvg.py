@@ -84,6 +84,8 @@ def convert(document, canvas, items=None, tounicode=None):
 			# left state unchanged
 			assert options['state'] in ['normal', DISABLED, 'hidden']
 
+                # skip hidden items
+                if options['state'] == 'hidden': continue
 
 		def get(name, default=""):
 			if state == ACTIVE and options.get(state + name):
@@ -256,7 +258,7 @@ def convert(document, canvas, items=None, tounicode=None):
 
 
 		for attr, value in style.items():
-			if value: # create only nonempty attributes
+			if value != '': # create only nonempty attributes
 				element.setAttribute(attr, str(value))
 
 	return elements
