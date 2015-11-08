@@ -7,6 +7,8 @@
 # e-mail: wojciech_mula@poczta.onet.pl
 # WWW   : http://0x80.pl/
 
+from __future__ import division
+
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
 
 __all__ = ["convert", "SVGdocument", "saveall"]
@@ -538,7 +540,7 @@ def HTMLcolor(canvas, color):
 	if color:
 		# r, g, b \in [0..2**16]
 
-		r, g, b = ["%02x" % (c/256) for c in canvas.winfo_rgb(color)]
+		r, g, b = ["%02x" % (c // 256) for c in canvas.winfo_rgb(color)]
 
 		if (r[0] == r[1]) and (g[0] == g[1]) and (b[0] == b[1]):
 			# shorter form #rgb
