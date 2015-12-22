@@ -1,1 +1,1 @@
-from canvasvg import *
+from .canvasvg import *
