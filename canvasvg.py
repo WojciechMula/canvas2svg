@@ -564,7 +564,10 @@ def arrow_head(document, x0, y0, x1, y1, arrowshape):
 	if d == 0.0: # XXX: equal, no "close enough"
 		return poly
 
-	d1, d2, d3 = list(map(float, arrowshape))
+	try:
+		d1, d2, d3 = list(map(float, arrowshape))
+	except ValueError:
+		d1, d2, d3 = map(float, arrowshape.split())
 	P0 = (x0, y0)
 	P1 = (x1, y1)
 	
