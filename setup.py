@@ -8,7 +8,7 @@ def get_readme():
 
 setup(
     name                = 'canvasvg',
-    version             = '1.0.0',
+    version             = '1.0.3',
     description         = "Save Tkinter Canvas in SVG file",
     author              = "Wojciech Muła",
     author_email        = "wojciech_mula@poczta.onet.pl",
