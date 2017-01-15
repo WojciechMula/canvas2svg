@@ -11,7 +11,7 @@ from __future__ import division
 
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
 
-__all__ = ["convert", "SVGdocument", "saveall"]
+__all__ = ["convert", "SVGdocument", "saveall", "PYTHON", "MODULE", "NONE", "warnings"]
 
 try:
 	# python3
@@ -22,14 +22,35 @@ except ImportError:
 	import Tkinter as tkinter
 	from Tkconstants import *
 
+PYTHON = 100
+MODULE = 200
+NONE   = 300
+warnings_mode = MODULE
 
-def warn(msg):
-	from sys import stderr
+def warnings(mode):
+	global warnings_mode
 
-	stderr.write('canvas2svg warning: ')
-	stderr.write(msg)
-	stderr.write('\n')
+	if mode not in [PYTHON, MODULE, NONE]:
+		raise ValueError("Please use one of constants: PYTHON, MODULE, NONE")
 
+	warnings_mode = mode
+
+
+try:
+       warn
+except NameError:
+       from warnings import warn
+
+
+def emit_warning(msg):
+	if warnings_mode == PYTHON:
+		warn(msg)
+	elif warnings_mode == MODULE:
+		from sys import stderr
+
+		stderr.write('canvas2svg warning: ')
+		stderr.write(msg)
+		stderr.write('\n')
 
 def convert(document, canvas, items=None, tounicode=None):
 	"""
@@ -61,11 +82,11 @@ def convert(document, canvas, items=None, tounicode=None):
 
 	elements = []
 	for item in items:
-		
+
 		# skip unsupported items
 		itemtype = canvas.type(item)
 		if itemtype not in supported_item_types:
-			warn("Items of type '%s' are not supported." % itemtype)
+			emit_warning("Items of type '%s' are not supported." % itemtype)
 			continue
 
 		# get item coords
@@ -169,7 +190,7 @@ def convert(document, canvas, items=None, tounicode=None):
 					style['fill'] = "none"
 					style['stroke-linejoin'] = join_style[options['joinstyle']]
 			else:
-				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
+				emit_warning("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = polyline(coords)
 				style['stroke-linejoin'] = join_style[options['joinstyle']]
 
@@ -189,7 +210,7 @@ def convert(document, canvas, items=None, tounicode=None):
 			elif options['smooth'] == '0':
 				element = polygon(document, coords)
 			else:
-				warn("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
+				emit_warning("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
 				element = polygon(document, coords)
 
 			elements.append(element)

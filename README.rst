@@ -62,6 +62,20 @@ Helper function: saves whole canvas or selected items in SVG file,
 sets proper  dimensions, and viewport;  additional ``margin`` can
 be set.
 
+
+``warnings(mode)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Module might emit warnings. By default it use custom function which
+prints message on the standard error. You can change this by calling
+method ``canvassvg.warnings(mode)`` with three possible values:
+
+* ``canvassvg.PYTHON`` --- use ``warn`` from the standard module
+  ``warnings``;
+* ``canvassvg.MODULE`` --- use the custom function;
+* ``canvassvg.NONE``   --- do not print any message.
+
+
 License & Author
 ------------------------------------------------------------------------
 
