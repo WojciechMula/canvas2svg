@@ -1,12 +1,6 @@
 Tkinter canvas to SVG exporter
 ========================================================================
 
-:Added on: 1.12.2006
-:Update: 2013-07-23 --- support for "raw" smoothed lines (contributed by Marc Culler, author of plink_)
-:Update: 2011-02-20 --- python3 compatibility
-:Update: 2011-01-25 --- update ``saveall``: use list of items to export
-:Update: 2008-11-08 --- added ``tounicode``, optional argument
-
 This module provides function ``convert`` that convert all or selected
 items placed on given canvas object.
 
@@ -76,10 +70,16 @@ method ``canvassvg.warnings(mode)`` with three possible values:
 * ``canvassvg.NONE``   --- do not print any message.
 
 
-License & Author
+Changelog
 ------------------------------------------------------------------------
 
-* License: BSD
-* Author: Wojciech Muła, e-mail: wojciech_mula@poczta.onet.pl
+Below are major changes made before moving on Github__.
 
-.. _plink: http://www.math.uic.edu/t3m/plink/doc/
+* 2013-07-23 --- support for "raw" smoothed lines (contributed by Marc Culler, author of plink__)
+* 2011-02-20 --- python3 compatibility
+* 2011-01-25 --- update ``saveall``: use list of items to export
+* 2008-11-08 --- added ``tounicode``, optional argument
+* 2006-12-01 --- initial release
+
+__ https://github.com/WojciechMula/canvas2svg
+__ http://www.math.uic.edu/t3m/plink/doc/
