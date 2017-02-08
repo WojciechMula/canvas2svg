@@ -144,8 +144,17 @@ def convert(document, canvas, items=None, tounicode=None):
 		if state == ACTIVE:
 			width = max(float(options['activewidth']), width)
 		elif state == DISABLED:
-			if float(options['disabledwidth']) > 0:
-				width = options['disabledwidth']
+			try:
+				disabledwidth = options['disabledwidth']
+			except KeyError:
+				# Text item might not have 'disabledwidth' option. This raises
+				# the exception in course of processing of such item.
+				# Default value is 0. Hence, it shall not affect width.
+				pass
+			else:
+				if float(disabledwidth) > 0:
+					width = disabledwidth
+
 	
 		if width != 1.0:
 			style['stroke-width'] = width
