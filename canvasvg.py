@@ -368,6 +368,12 @@ def segment_to_line(document, coords):
 		y2 = coords[3],
 	)
 
+def segment_to_path(document, coords):
+	"polyline with 2 vertices using <path> tag"
+	return setattribs(
+		document.createElement('path'),
+		d = "M%s,%s %s,%s" % tuple(coords[:4])
+	)
 
 def polyline(document, coords):
 	"polyline with more then 2 vertices"
