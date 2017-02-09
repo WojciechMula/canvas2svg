@@ -192,7 +192,7 @@ def convert(document, canvas, items=None, tounicode=None):
 			elif options['smooth'] == '0':
 				if len(coords) == 4:
 					# segment
-					element = segment(document, coords)
+					element = segment_to_line(document, coords)
 				else:
 					# polyline
 					element = polyline(document, coords)
@@ -358,8 +358,8 @@ def saveall(filename, canvas, items=None, margin=10, tounicode=None):
 #========================================================================
 # canvas elements geometry
 
-def segment(document, coords):
-	"polyline with 2 vertices"
+def segment_to_line(document, coords):
+	"polyline with 2 vertices using <line> tag"
 	return setattribs(
 		document.createElement('line'),
 		x1 = coords[0],
