@@ -52,6 +52,22 @@ def emit_warning(msg):
 		stderr.write(msg)
 		stderr.write('\n')
 
+SEGMENT_TO_LINE = 1000
+SEGMENT_TO_PATH = 2000
+
+def configure(*flags):
+	global segment
+
+	for flag in flags:
+		if flag == SEGMENT_TO_LINE:
+			segment = segment_to_line
+		elif flag == SEGMENT_TO_PATH:
+			segment = segment_to_path
+		else:
+			raise ValueError(
+				"Please use one of constants: SEGMENT_TO_LINE, SEGMENT_TO_PATH"
+			)
+
 def convert(document, canvas, items=None, tounicode=None):
 	"""
 	Convert 'items' stored in 'canvas' to SVG 'document'.
@@ -64,6 +80,7 @@ def convert(document, canvas, items=None, tounicode=None):
 	Return list of XML elements
 	"""
 	tk = canvas.tk
+	global segment
 
 	if items is None:	# default: all items
 		items = canvas.find_all()
@@ -358,8 +375,8 @@ def saveall(filename, canvas, items=None, margin=10, tounicode=None):
 #========================================================================
 # canvas elements geometry
 
-def segment(document, coords):
-	"polyline with 2 vertices"
+def segment_to_line(document, coords):
+	"polyline with 2 vertices using <line> tag"
 	return setattribs(
 		document.createElement('line'),
 		x1 = coords[0],
@@ -368,6 +385,14 @@ def segment(document, coords):
 		y2 = coords[3],
 	)
 
+def segment_to_path(document, coords):
+	"polyline with 2 vertices using <path> tag"
+	return setattribs(
+		document.createElement('path'),
+		d = "M%s,%s %s,%s" % tuple(coords[:4])
+	)
+
+segment = segment_to_line
 
 def polyline(document, coords):
 	"polyline with more then 2 vertices"
