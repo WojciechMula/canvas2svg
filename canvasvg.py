@@ -80,6 +80,7 @@ def convert(document, canvas, items=None, tounicode=None):
 	Return list of XML elements
 	"""
 	tk = canvas.tk
+	global segment
 
 	if items is None:	# default: all items
 		items = canvas.find_all()
@@ -208,7 +209,7 @@ def convert(document, canvas, items=None, tounicode=None):
 			elif options['smooth'] == '0':
 				if len(coords) == 4:
 					# segment
-					element = segment_to_line(document, coords)
+					element = segment(document, coords)
 				else:
 					# polyline
 					element = polyline(document, coords)
