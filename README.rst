@@ -62,12 +62,12 @@ be set.
 
 Module might emit warnings. By default it use custom function which
 prints message on the standard error. You can change this by calling
-method ``canvassvg.warnings(mode)`` with three possible values:
+method ``canvasvg.warnings(mode)`` with three possible values:
 
-* ``canvassvg.PYTHON`` --- use ``warn`` from the standard module
+* ``canvasvg.PYTHON`` --- use ``warn`` from the standard module
   ``warnings``;
-* ``canvassvg.MODULE`` --- use the custom function;
-* ``canvassvg.NONE``   --- do not print any message.
+* ``canvasvg.MODULE`` --- use the custom function;
+* ``canvasvg.NONE``   --- do not print any message.
 
 
 ``configure(*flags)``
@@ -75,11 +75,11 @@ method ``canvassvg.warnings(mode)`` with three possible values:
 
 Module might use either ``<path>`` or ``<line>`` tag for segment
 representation. By default it uses ``<line>``. The behaviour could be changed
-globally by calling ``canvassvg.configure(*flags)`` with one of consequent
+globally by calling ``canvasvg.configure(*flags)`` with one of consequent
 values:
 
-* ``canvassvg.SEGMENT_TO_LINE`` --- use ``<line>`` tag;
-* ``canvassvg.SEGMENT_TO_PATH`` --- use ``<path>`` tag.
+* ``canvasvg.SEGMENT_TO_LINE`` --- use ``<line>`` tag;
+* ``canvasvg.SEGMENT_TO_PATH`` --- use ``<path>`` tag.
 
 
 Changelog
