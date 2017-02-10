@@ -52,6 +52,22 @@ def emit_warning(msg):
 		stderr.write(msg)
 		stderr.write('\n')
 
+SEGMENT_TO_LINE = 1000
+SEGMENT_TO_PATH = 2000
+
+def configure(*flags):
+	global segment
+
+	for flag in flags:
+		if flag == SEGMENT_TO_LINE:
+			segment = segment_to_line
+		elif flag == SEGMENT_TO_PATH:
+			segment = segment_to_path
+		else:
+			raise ValueError(
+				"Please use one of constants: SEGMENT_TO_LINE, SEGMENT_TO_PATH"
+			)
+
 def convert(document, canvas, items=None, tounicode=None):
 	"""
 	Convert 'items' stored in 'canvas' to SVG 'document'.
@@ -374,6 +390,8 @@ def segment_to_path(document, coords):
 		document.createElement('path'),
 		d = "M%s,%s %s,%s" % tuple(coords[:4])
 	)
+
+segment = segment_to_line
 
 def polyline(document, coords):
 	"polyline with more then 2 vertices"
