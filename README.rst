@@ -70,6 +70,18 @@ method ``canvassvg.warnings(mode)`` with three possible values:
 * ``canvassvg.NONE``   --- do not print any message.
 
 
+``configure(*flags)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Module might use either ``<path>`` or ``<line>`` tag for segment
+representation. By default it uses ``<line>``. The behaviour could be changed
+globally by calling ``canvassvg.configure(*flags)`` with one of consequent
+values:
+
+* ``canvassvg.SEGMENT_TO_LINE`` --- use ``<line>`` tag;
+* ``canvassvg.SEGMENT_TO_PATH`` --- use ``<path>`` tag.
+
+
 Changelog
 ------------------------------------------------------------------------
 
