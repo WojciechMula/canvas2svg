@@ -11,7 +11,9 @@ from __future__ import division
 
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
 
-__all__ = ["convert", "SVGdocument", "saveall", "PYTHON", "MODULE", "NONE", "warnings"]
+__all__ = ["convert", "SVGdocument", "saveall", "PYTHON", "MODULE", "NONE",
+	"warnings", "configure", "SEGMENT_TO_LINE", "SEGMENT_TO_PATH"
+]
 
 try:
 	# python3
