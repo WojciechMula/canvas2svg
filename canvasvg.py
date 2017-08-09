@@ -338,7 +338,11 @@ def saveall(filename, canvas, items=None, margin=10, tounicode=None):
 		doc.documentElement.appendChild(element)
 
 	if items is None:
-		x1, y1, x2, y2 = canvas.bbox(ALL)
+		bbox = canvas.bbox(ALL)
+		if bbox is None:
+			x1, y1, x2, y2 = 0, 0, 0, 0
+		else:
+			x1, y1, x2, y2 = bbox
 	else:
 		x1 = None
 		y1 = None
