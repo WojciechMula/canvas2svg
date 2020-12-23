@@ -263,15 +263,15 @@ def convert(document, canvas, items=None, tounicode=None):
 
 		elif itemtype == 'text':
 			style['stroke'] = '' # no stroke
-			
+
 			# setup geometry
 			xmin, ymin, xmax, ymax = canvas.bbox(item)
-			
+
 			x = coords[0]
 
 			# set y at 'dominant-baseline'
 			y = ymin + font_metrics(tk, options['font'], 'ascent') 
-			
+
 			element = setattribs(
 				document.createElement('text'),
 				x = x, y = y 
@@ -288,6 +288,22 @@ def convert(document, canvas, items=None, tounicode=None):
 			style['fill'] = HTMLcolor(canvas, get('fill'))
 			style["text-anchor"] = text_anchor[options["anchor"]]
 			style['font-family'] = actual['family']
+
+			# starting from tkinter version 8.6 text can have an angle
+			if 'angle' in options and tkinter.TkVersion >= 8.6:
+				angle = float(options['angle'])
+				if angle != 0:
+					# rotate to 0° to get correct bbox
+					canvas.itemconfigure(item, angle=0)
+					xmin, ymin, xmax, ymax = canvas.bbox(item)
+					# rotate back
+					canvas.itemconfigure(item, angle=angle)
+
+					# update y at the correct rotated position and keep
+					# y at 'dominant-baseline'
+					y = ymin + font_metrics(tk, options['font'], 'ascent')
+					element.setAttribute("y", str(y))
+					style['transform'] = "rotate(%s, %s, %s)" % (-angle, x, coords[1])
 
 			# size
 			size = float(actual['size'])

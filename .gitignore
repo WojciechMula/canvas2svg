@@ -1,5 +1,6 @@
 *.swp
 *.pyc
 *.svg
+.DS_Store
 dist
 MANIFEST
